@@ -15,24 +15,22 @@
       --border: #e2e8f0;
       --deposit: #16a34a;
       --deduct: #dc2626;
+      --warning: #d97706;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; padding: 12px; background: var(--bg); color: var(--text); font-size: 15px; }
     .container { max-width: 800px; margin: 0 auto; }
     
-    /* 頂部標題 */
     h1 { font-size: 1.25rem; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .header-btns { display: flex; gap: 6px; }
     .btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
     .btn:active { background: #f1f5f9; }
     
-    /* 雲端基地設定卡片 */
     .config-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
     .config-row { display: flex; gap: 8px; }
     .config-card input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: #fff; }
     .config-card button { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
-    /* 各廠商餘額網格 (手機自動變為單排或雙排適應) */
     .vendor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
     @media (min-width: 640px) {
       .vendor-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
@@ -45,10 +43,9 @@
     .bal-neg { color: var(--deduct); }
     .vendor-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
-    /* 通用卡片外框 */
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .card-editing { border-color: var(--warning); background: #fffbeb; }
     
-    /* 表單排版 */
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
     @media (min-width: 500px) {
       .form-grid { grid-template-columns: repeat(2, 1fr); }
@@ -56,11 +53,12 @@
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
     input, select { padding: 11px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; width: 100%; background: #fff; appearance: none; }
-    .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-    .btn-submit:active { background: var(--primary-hover); }
-    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
+    
+    .form-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; }
+    .btn-submit.editing { background: var(--warning); }
+    .btn-cancel { background: #e2e8f0; color: #334155; border: none; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
 
-    /* 明細列表區 (手機專屬卡片化呈現) */
     .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 6px; }
     .filter-bar strong { font-size: 0.95rem; }
     
@@ -73,11 +71,13 @@
     .record-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 100%; gap: 6px; }
     .record-amount { font-size: 1rem; font-weight: bold; white-space: nowrap; }
     
+    .action-btns { display: flex; gap: 4px; }
+    .edit-btn { background: #fef3c7; border: none; color: #b45309; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
+    .del-btn { background: #fee2e2; border: none; color: var(--deduct); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
+    
     .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     .badge-deposit { background: #dcfce7; color: var(--deposit); }
     .badge-deduct { background: #fee2e2; color: var(--deduct); }
-    
-    .del-btn { background: #fee2e2; border: none; color: var(--deduct); padding: 3px 8px; border-radius: 4px; font-size: 0.75px; cursor: pointer; font-weight: 500; }
     
     .loading { text-align: center; padding: 20px; color: var(--muted); font-size: 0.9rem; }
     .hidden { display: none !important; }
@@ -94,7 +94,6 @@
     </div>
   </h1>
 
-  <!-- 雲端基地設定卡片 -->
   <div id="configCard" class="config-card hidden">
     <label>請貼上 Google Apps Script 網頁應用程式網址：</label>
     <div class="config-row">
@@ -103,12 +102,13 @@
     </div>
   </div>
 
-  <!-- 各廠商獨立餘額總覽 -->
   <div id="vendorGrid" class="vendor-grid"></div>
 
-  <!-- 新增寄款 / 扣款表單 -->
-  <div class="card">
+  <!-- 新增 / 修改表單區 -->
+  <div class="card" id="formCard">
+    <div id="formTitle" style="font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; color: var(--primary);">➕ 新增帳務紀錄</div>
     <form id="recordForm" onsubmit="submitRecord(event)">
+      <input type="hidden" id="editId" value="">
       <div class="form-grid">
         <div class="form-group">
           <label>日期</label>
@@ -135,14 +135,16 @@
         <label>分述 (品項、數量、備註)</label>
         <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3" required>
       </div>
-      <button type="submit" id="submitBtn" class="btn-submit">儲存並同步至雲端</button>
+      <div class="form-btns">
+        <button type="submit" id="submitBtn" class="btn-submit">儲存並同步至雲端</button>
+        <button type="button" id="cancelBtn" class="btn-cancel hidden" onclick="cancelEdit()">取消</button>
+      </div>
     </form>
   </div>
 
-  <!-- 帳務明細清單 (手機友善卡片版) -->
   <div class="card">
     <div class="filter-bar">
-      <strong id="tableTitle">全部帳務明細</strong>
+      <strong id="tableTitle">全部明細</strong>
       <button class="btn" onclick="selectVendor('ALL')">顯示全部</button>
     </div>
     <div id="recordListBody">
@@ -212,12 +214,16 @@
       alert('請先設定雲端基地！');
       return;
     }
+    const editId = document.getElementById('editId').value;
+    const isEditing = !!editId;
+    
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = '儲存中...';
 
     const payload = {
-      action: 'add',
+      action: isEditing ? 'edit' : 'add',
+      id: editId,
       date: document.getElementById('dateInput').value,
       vendor: document.getElementById('vendorInput').value.trim(),
       type: document.getElementById('typeInput').value,
@@ -230,15 +236,49 @@
         method: 'POST',
         body: JSON.stringify(payload)
       });
-      document.getElementById('amountInput').value = '';
-      document.getElementById('descInput').value = '';
+      cancelEdit();
+      document.getElementById('dateInput').valueAsDate = new Date();
       await fetchRecords();
     } catch (err) {
       alert('儲存發生錯誤');
     } finally {
       btn.disabled = false;
-      btn.textContent = '儲存並同步至雲端';
+      btn.textContent = isEditing ? '確認修改並同步' : '儲存並同步至雲端';
     }
+  }
+
+  // 點擊修改按鈕：將資料載入到上方表單
+  function startEdit(id) {
+    const record = allRecords.find(r => r.id === id);
+    if (!record) return;
+
+    document.getElementById('editId').value = record.id;
+    document.getElementById('dateInput').value = record.date;
+    document.getElementById('vendorInput').value = record.vendor;
+    document.getElementById('typeInput').value = record.type;
+    document.getElementById('amountInput').value = record.amount;
+    document.getElementById('descInput').value = record.description;
+
+    document.getElementById('formTitle').textContent = `✏️ 正在修改紀錄：${record.vendor} (${record.date})`;
+    document.getElementById('formTitle').style.color = 'var(--warning)';
+    document.getElementById('formCard').classList.add('card-editing');
+    document.getElementById('submitBtn').textContent = '確認修改並同步';
+    document.getElementById('submitBtn').classList.add('editing');
+    document.getElementById('cancelBtn').classList.remove('hidden');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    document.getElementById('editId').value = '';
+    document.getElementById('recordForm').reset();
+    document.getElementById('dateInput').valueAsDate = new Date();
+    document.getElementById('formTitle').textContent = '➕ 新增帳務紀錄';
+    document.getElementById('formTitle').style.color = 'var(--primary)';
+    document.getElementById('formCard').classList.remove('card-editing');
+    document.getElementById('submitBtn').textContent = '儲存並同步至雲端';
+    document.getElementById('submitBtn').classList.remove('editing');
+    document.getElementById('cancelBtn').classList.add('hidden');
   }
 
   async function deleteRecord(id) {
@@ -248,6 +288,9 @@
         method: 'POST',
         body: JSON.stringify({ action: 'delete', id: id })
       });
+      if (document.getElementById('editId').value === id) {
+        cancelEdit();
+      }
       await fetchRecords();
     } catch (err) {
       alert('刪除失敗');
@@ -335,7 +378,10 @@
           <div style="font-weight:bold; color:${r.type === '寄款' ? 'var(--deposit)' : 'var(--deduct)'}">
             ${r.type === '寄款' ? '+' : '-'}$${r.amount.toLocaleString()}
           </div>
-          <button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button>
+          <div class="action-btns">
+            <button class="edit-btn" onclick="startEdit('${r.id}')">修改</button>
+            <button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button>
+          </div>
         </div>
       </div>
     `).join('');
