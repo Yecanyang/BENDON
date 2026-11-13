@@ -1,212 +1,340 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <title>便當與飲料小帳本</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>廠商便當飲料寄款與扣款系統</title>
   <style>
     :root {
-      font-family:
-        system-ui,
-        -apple-system,
-        "Microsoft JhengHei",
-        sans-serif;
-
-      color: #294737;
-      background: #f3f6ef;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --deposit: #16a34a;
+      --deduct: #dc2626;
     }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; }
+    body { margin: 0; padding: 16px; background: var(--bg); color: var(--text); }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .header-btns { display: flex; gap: 8px; }
+    .btn { background: var(--card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; }
+    .btn:hover { background: #f1f5f9; }
+    
+    /* 雲端基地設定區 */
+    .config-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px; margin-bottom: 20px; display: flex; gap: 8px; align-items: center; }
+    .config-card input { flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background: #fff; }
+    .config-card button { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .config-card button:hover { background: var(--primary-hover); }
 
-    * {
-      box-sizing: border-box;
-    }
+    /* 廠商餘額卡片區 */
+    .vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .vendor-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 14px; cursor: pointer; transition: 0.2s; }
+    .vendor-card.active { border-color: var(--primary); background: #eff6ff; }
+    .vendor-name { font-weight: bold; font-size: 1.05rem; margin-bottom: 6px; }
+    .vendor-balance { font-size: 1.3rem; font-weight: 700; }
+    .bal-pos { color: var(--deposit); }
+    .bal-neg { color: var(--deduct); }
+    .vendor-meta { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
+    /* 記帳表單區 */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+    input, select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; width: 100%; }
+    .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 12px; width: 100%; }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; }
 
-      display: grid;
-      place-items: center;
-
-      padding: 20px;
-    }
-
-    main {
-      width: 100%;
-      max-width: 520px;
-
-      padding: 36px;
-      background: #ffffff;
-
-      border: 1px solid #dbe4d7;
-      border-radius: 24px;
-
-      box-shadow: 0 12px 40px rgba(41, 71, 55, 0.05);
-    }
-
-    .category {
-      margin: 0 0 14px;
-      font-size: 13px;
-      letter-spacing: 2px;
-      color: #71816d;
-    }
-
-    h1 {
-      margin: 0 0 18px;
-      font-size: 29px;
-      line-height: 1.5;
-    }
-
-    .description {
-      margin: 0 0 24px;
-      color: #6b7a6b;
-      line-height: 1.9;
-    }
-
-    .features {
-      margin: 0 0 28px;
-      padding: 18px 20px;
-
-      background: #f3f6ef;
-      border-radius: 14px;
-    }
-
-    .features p {
-      margin: 6px 0;
-      font-size: 14px;
-      line-height: 1.7;
-    }
-
-    .open-button {
-      display: block;
-      width: 100%;
-
-      padding: 16px;
-
-      background: #356047;
-      color: #ffffff;
-
-      border-radius: 12px;
-
-      text-align: center;
-      text-decoration: none;
-      font-weight: bold;
-      line-height: 1.6;
-    }
-
-    .open-button:hover {
-      background: #294e39;
-    }
-
-    .open-button:focus-visible {
-      outline: 3px solid #c2a861;
-      outline-offset: 4px;
-    }
-
-    .note {
-      margin: 18px 0 0;
-
-      font-size: 13px;
-      color: #7b8776;
-      line-height: 1.8;
-    }
-
-    #notice {
-      margin: 16px 0 0;
-      color: #a34231;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    @media (max-width: 480px) {
-      main {
-        padding: 28px 22px;
-      }
-
-      h1 {
-        font-size: 25px;
-      }
-    }
+    /* 明細表格區 */
+    .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 560px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+    th { background: #f1f5f9; font-weight: 600; color: var(--muted); }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    .badge-deposit { background: #dcfce7; color: var(--deposit); }
+    .badge-deduct { background: #fee2e2; color: var(--deduct); }
+    .del-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; }
+    .del-btn:hover { color: var(--deduct); }
+    .loading { text-align: center; padding: 20px; color: var(--muted); }
+    .hidden { display: none !important; }
   </style>
 </head>
-
 <body>
-  <main>
-    <p class="category">餐費管理 · 雲端同步</p>
 
-    <h1>便當與飲料小帳本</h1>
-
-    <p class="description">
-      記錄各廠商寄款、每日便當及飲料，
-      電腦與手機都能查看同一份帳。
-    </p>
-
-    <div class="features">
-      <p>廠商寄款日期及金額</p>
-      <p>便當份數、飲料杯數及單價</p>
-      <p>每間廠商獨立計算剩餘金額</p>
-      <p>收支查詢、修改及明細匯出</p>
+<div class="container">
+  <h1>
+    <span>🍱 廠商便當飲料帳務系統</span>
+    <div class="header-btns">
+      <button class="btn" onclick="toggleConfig()">⚙️ 設定雲端基地</button>
+      <button class="btn" onclick="fetchRecords()">🔄 同步資料</button>
     </div>
+  </h1>
 
-    <a
-      id="open"
-      class="open-button"
-      target="_top"
-      rel="noopener"
-      hidden
-    >
-      開啟雲端帳本
-    </a>
+  <!-- 雲端基地網址設定卡片 (初次使用或需更換時展開) -->
+  <div id="configCard" class="config-card hidden">
+    <input type="text" id="gasUrlInput" placeholder="請在此貼上 Google Apps Script 網頁應用程式網址...">
+    <button onclick="saveConfig()">儲存基地</button>
+  </div>
 
-    <p id="notice" role="status" aria-live="polite"></p>
+  <!-- 各廠商獨立餘額總覽 -->
+  <div id="vendorGrid" class="vendor-grid"></div>
 
-    <p class="note">
-      免密碼開啟，資料儲存在妳的 Google 試算表。<br>
-      知道帳本網址的人都能查看及修改紀錄。
-    </p>
+  <!-- 新增寄款 / 扣款表單 -->
+  <div class="card">
+    <form id="recordForm" onsubmit="submitRecord(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="dateInput" required>
+        </div>
+        <div class="form-group">
+          <label>廠商名稱 (可選或直接輸入新廠商)</label>
+          <input type="text" id="vendorInput" list="vendorList" placeholder="例如：水電工程行" required>
+          <datalist id="vendorList"></datalist>
+        </div>
+        <div class="form-group">
+          <label>帳務類型</label>
+          <select id="typeInput" required>
+            <option value="扣款">➖ 扣款 (訂便當/飲料)</option>
+            <option value="寄款">➕ 寄款 (廠商預繳)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>金額</label>
+          <input type="number" id="amountInput" min="1" placeholder="輸入金額" required>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 12px;">
+        <label>分述 (品項、數量、單價備註)</label>
+        <input type="text" id="descInput" placeholder="例如：雞腿便當*5 ($100) + 紅茶*5 ($25)" required>
+      </div>
+      <button type="submit" id="submitBtn" class="btn-submit">儲存紀錄並同步至雲端</button>
+    </form>
+  </div>
 
-    <noscript>
-      <p>請開啟瀏覽器的 JavaScript，才能使用網站入口。</p>
-    </noscript>
-  </main>
+  <!-- 帳務明細表 -->
+  <div class="card">
+    <div class="filter-bar">
+      <strong id="tableTitle">全部廠商帳務明細</strong>
+      <button class="btn" onclick="selectVendor('ALL')">顯示全部廠商</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>廠商</th>
+            <th>類型</th>
+            <th>分述</th>
+            <th>金額</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="recordTableBody">
+          <tr><td colspan="6" class="loading">請先點擊右上角「設定雲端基地」貼上網址</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-  <script>
-    /*
-     * 唯一需要修改的地方：
-     * 將下面引號內的文字換成妳的 GAS 部署網址。
-     *
-     * 網址格式：
-     * https://script.google.com/macros/s/你的部署ID/exec
-     *
-     * 不要使用 /dev 結尾的測試網址。
-     */
-    const GAS_URL = "請貼上妳的GAS部署網址";
+<script>
+  let allRecords = [];
+  let selectedVendor = 'ALL';
+  let GAS_URL = localStorage.getItem('BENTO_GAS_URL') || '';
 
-    const openButton = document.getElementById("open");
-    const notice = document.getElementById("notice");
+  // 初始化今日日期
+  document.getElementById('dateInput').valueAsDate = new Date();
 
-    const url = GAS_URL.trim();
-
-    const validGasUrl =
-      /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
-
-    if (validGasUrl.test(url)) {
-      openButton.href = url;
-      openButton.hidden = false;
+  // 檢查是否已設定網址
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!GAS_URL) {
+      document.getElementById('configCard').classList.remove('hidden');
     } else {
-      notice.textContent =
-        "尚未設定雲端帳本網址，請修改 index.html 裡的 GAS_URL。";
+      document.getElementById('gasUrlInput').value = GAS_URL;
+      fetchRecords();
     }
-  </script>
+  });
+
+  function toggleConfig() {
+    const card = document.getElementById('configCard');
+    card.classList.toggle('hidden');
+    if (!card.classList.contains('hidden') && GAS_URL) {
+      document.getElementById('gasUrlInput').value = GAS_URL;
+    }
+  }
+
+  function saveConfig() {
+    const url = document.getElementById('gasUrlInput').value.trim();
+    if (!url.startsWith('https://script.google.com')) {
+      alert('請輸入有效的 Google Apps Script 網頁應用程式網址！');
+      return;
+    }
+    GAS_URL = url;
+    localStorage.setItem('BENTO_GAS_URL', url);
+    document.getElementById('configCard').classList.add('hidden');
+    alert('雲端基地網址儲存成功！');
+    fetchRecords();
+  }
+
+  // 從 GAS 讀取所有紀錄
+  async function fetchRecords() {
+    if (!GAS_URL) {
+      alert('請先設定雲端基地網址！');
+      document.getElementById('configCard').classList.remove('hidden');
+      return;
+    }
+    const tbody = document.getElementById('recordTableBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">同步雲端資料中...</td></tr>';
+    try {
+      const res = await fetch(GAS_URL);
+      const json = await res.json();
+      if (json.status === 'success') {
+        allRecords = json.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+        renderDashboard();
+      }
+    } catch (err) {
+      tbody.innerHTML = '<tr><td colspan="6" class="loading" style="color:red;">讀取失敗，請確認基地網址是否正確及權限設定為「所有人」。</td></tr>';
+    }
+  }
+
+  // 送出新增紀錄
+  async function submitRecord(e) {
+    e.preventDefault();
+    if (!GAS_URL) {
+      alert('請先設定雲端基地網址！');
+      return;
+    }
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '儲存中...';
+
+    const payload = {
+      action: 'add',
+      date: document.getElementById('dateInput').value,
+      vendor: document.getElementById('vendorInput').value,
+      type: document.getElementById('typeInput').value,
+      amount: document.getElementById('amountInput').value,
+      description: document.getElementById('descInput').value
+    };
+
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      document.getElementById('amountInput').value = '';
+      document.getElementById('descInput').value = '';
+      await fetchRecords();
+    } catch (err) {
+      alert('儲存發生錯誤，請稍後再試。');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '儲存紀錄並同步至雲端';
+    }
+  }
+
+  // 刪除紀錄
+  async function deleteRecord(id) {
+    if (!confirm('確定要刪除這筆帳務紀錄嗎？刪除後餘額將自動重算。')) return;
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'delete', id: id })
+      });
+      await fetchRecords();
+    } catch (err) {
+      alert('刪除失敗');
+    }
+  }
+
+  // 計算各廠商獨立餘額並渲染畫面
+  function renderDashboard() {
+    const vendorStats = {};
+    allRecords.forEach(r => {
+      if (!vendorStats[r.vendor]) {
+        vendorStats[r.vendor] = { deposit: 0, deduct: 0, balance: 0 };
+      }
+      if (r.type === '寄款') {
+        vendorStats[r.vendor].deposit += r.amount;
+        vendorStats[r.vendor].balance += r.amount;
+      } else {
+        vendorStats[r.vendor].deduct += r.amount;
+        vendorStats[r.vendor].balance -= r.amount;
+      }
+    });
+
+    const grid = document.getElementById('vendorGrid');
+    const dataList = document.getElementById('vendorList');
+    grid.innerHTML = '';
+    dataList.innerHTML = '';
+
+    Object.keys(vendorStats).forEach(v => {
+      const stat = vendorStats[v];
+      const isPos = stat.balance >= 0;
+      const card = document.createElement('div');
+      card.className = `vendor-card ${selectedVendor === v ? 'active' : ''}`;
+      card.onclick = () => selectVendor(v);
+      card.innerHTML = `
+        <div class="vendor-name">${v}</div>
+        <div class="vendor-balance ${isPos ? 'bal-pos' : 'bal-neg'}">
+          ${isPos ? '餘額' : '欠款'} $${Math.abs(stat.balance).toLocaleString()}
+        </div>
+        <div class="vendor-meta">寄款 $${stat.deposit.toLocaleString()} / 扣款 $${stat.deduct.toLocaleString()}</div>
+      `;
+      grid.appendChild(card);
+
+      const option = document.createElement('option');
+      option.value = v;
+      dataList.appendChild(option);
+    });
+
+    renderTable();
+  }
+
+  function selectVendor(vendor) {
+    selectedVendor = vendor;
+    if (vendor !== 'ALL') {
+      document.getElementById('vendorInput').value = vendor;
+    }
+    renderDashboard();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('recordTableBody');
+    const title = document.getElementById('tableTitle');
+    const filtered = selectedVendor === 'ALL' 
+      ? allRecords 
+      : allRecords.filter(r => r.vendor === selectedVendor);
+
+    title.textContent = selectedVendor === 'ALL' 
+      ? `全部廠商帳務明細 (共 ${filtered.length} 筆)` 
+      : `【${selectedVendor}】獨立對帳明細 (共 ${filtered.length} 筆)`;
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="loading">尚無帳務紀錄</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(r => `
+      <tr>
+        <td>${r.date}</td>
+        <td><strong>${r.vendor}</strong></td>
+        <td><span class="badge ${r.type === '寄款' ? 'badge-deposit' : 'badge-deduct'}">${r.type}</span></td>
+        <td>${r.description}</td>
+        <td style="font-weight:bold; color:${r.type === '寄款' ? 'var(--deposit)' : 'var(--deduct)'}">
+          ${r.type === '寄款' ? '+' : '-'}$${r.amount.toLocaleString()}
+        </td>
+        <td><button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button></td>
+      </tr>
+    `).join('');
+  }
+</script>
 </body>
 </html>
