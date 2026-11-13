@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>便當與飲料小帳本</title>
+
+  <style>
+    :root {
+      font-family:
+        system-ui,
+        -apple-system,
+        "Microsoft JhengHei",
+        sans-serif;
+
+      color: #294737;
+      background: #f3f6ef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+
+      display: grid;
+      place-items: center;
+
+      padding: 20px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 520px;
+
+      padding: 36px;
+      background: #ffffff;
+
+      border: 1px solid #dbe4d7;
+      border-radius: 24px;
+
+      box-shadow: 0 12px 40px rgba(41, 71, 55, 0.05);
+    }
+
+    .category {
+      margin: 0 0 14px;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #71816d;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 29px;
+      line-height: 1.5;
+    }
+
+    .description {
+      margin: 0 0 24px;
+      color: #6b7a6b;
+      line-height: 1.9;
+    }
+
+    .features {
+      margin: 0 0 28px;
+      padding: 18px 20px;
+
+      background: #f3f6ef;
+      border-radius: 14px;
+    }
+
+    .features p {
+      margin: 6px 0;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .open-button {
+      display: block;
+      width: 100%;
+
+      padding: 16px;
+
+      background: #356047;
+      color: #ffffff;
+
+      border-radius: 12px;
+
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+      line-height: 1.6;
+    }
+
+    .open-button:hover {
+      background: #294e39;
+    }
+
+    .open-button:focus-visible {
+      outline: 3px solid #c2a861;
+      outline-offset: 4px;
+    }
+
+    .note {
+      margin: 18px 0 0;
+
+      font-size: 13px;
+      color: #7b8776;
+      line-height: 1.8;
+    }
+
+    #notice {
+      margin: 16px 0 0;
+      color: #a34231;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 480px) {
+      main {
+        padding: 28px 22px;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <p class="category">餐費管理 · 雲端同步</p>
+
+    <h1>便當與飲料小帳本</h1>
+
+    <p class="description">
+      記錄各廠商寄款、每日便當及飲料，
+      電腦與手機都能查看同一份帳。
+    </p>
+
+    <div class="features">
+      <p>廠商寄款日期及金額</p>
+      <p>便當份數、飲料杯數及單價</p>
+      <p>每間廠商獨立計算剩餘金額</p>
+      <p>收支查詢、修改及明細匯出</p>
+    </div>
+
+    <a
+      id="open"
+      class="open-button"
+      target="_top"
+      rel="noopener"
+      hidden
+    >
+      開啟雲端帳本
+    </a>
+
+    <p id="notice" role="status" aria-live="polite"></p>
+
+    <p class="note">
+      免密碼開啟，資料儲存在妳的 Google 試算表。<br>
+      知道帳本網址的人都能查看及修改紀錄。
+    </p>
+
+    <noscript>
+      <p>請開啟瀏覽器的 JavaScript，才能使用網站入口。</p>
+    </noscript>
+  </main>
+
+  <script>
+    /*
+     * 唯一需要修改的地方：
+     * 將下面引號內的文字換成妳的 GAS 部署網址。
+     *
+     * 網址格式：
+     * https://script.google.com/macros/s/你的部署ID/exec
+     *
+     * 不要使用 /dev 結尾的測試網址。
+     */
+    const GAS_URL = "請貼上妳的GAS部署網址";
+
+    const openButton = document.getElementById("open");
+    const notice = document.getElementById("notice");
+
+    const url = GAS_URL.trim();
+
+    const validGasUrl =
+      /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+
+    if (validGasUrl.test(url)) {
+      openButton.href = url;
+      openButton.hidden = false;
+    } else {
+      notice.textContent =
+        "尚未設定雲端帳本網址，請修改 index.html 裡的 GAS_URL。";
+    }
+  </script>
+</body>
+</html>
