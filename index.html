@@ -6,55 +6,55 @@
   <title>廠商便當飲料記帳系統</title>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg: #f8fafc;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg: #f0f9ff;
       --card: #ffffff;
-      --text: #1e293b;
+      --text: #0f172a;
       --muted: #64748b;
-      --border: #e2e8f0;
-      --deposit: #16a34a;
-      --deduct: #dc2626;
+      --border: #bae6fd;
+      --deposit: #0284c7;
+      --deduct: #0369a1;
       --warning: #d97706;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif; -webkit-tap-highlight-color: transparent; }
     body { margin: 0; padding: 12px; background: var(--bg); color: var(--text); font-size: 15px; }
     .container { max-width: 800px; margin: 0 auto; }
     
-    h1 { font-size: 1.25rem; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    h1 { font-size: 1.25rem; margin: 0 0 12px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; color: #0369a1; }
     .header-btns { display: flex; gap: 6px; }
-    .btn { background: var(--card); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
-    .btn:active { background: #f1f5f9; }
+    .btn { background: #e0f2fe; color: #0369a1; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+    .btn:active { background: #bae6fd; }
     
-    .config-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .config-card { background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 10px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
     .config-row { display: flex; gap: 8px; }
     .config-card input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: #fff; }
     .config-card button { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
     /* 今日訂餐統計看板 */
-    .today-card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #ffffff; border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; }
+    .today-card { background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); color: #ffffff; border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(3, 105, 161, 0.2); }
+    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; }
     .today-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
-    .today-total-badge { background: #f59e0b; color: #1e293b; font-weight: 800; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
+    .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
     .today-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .today-chip { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
-    .today-chip strong { color: #fde047; font-size: 0.95rem; }
-    .today-empty { font-size: 0.85rem; color: #cbd5e1; }
+    .today-chip { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; }
+    .today-chip-row { display: flex; gap: 6px; align-items: center; }
+    .today-chip strong { color: #e0f2fe; }
+    .today-empty { font-size: 0.85rem; color: #e0f2fe; }
 
-    /* 廠商餘額卡片 */
     .vendor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
     @media (min-width: 640px) {
       .vendor-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
     }
     .vendor-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: 0.15s; }
-    .vendor-card.active { border-color: var(--primary); background: #eff6ff; }
-    .vendor-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vendor-card.active { border-color: var(--primary); background: #e0f2fe; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); }
+    .vendor-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #0369a1; }
     .vendor-balance { font-size: 1.15rem; font-weight: 700; }
-    .bal-pos { color: var(--deposit); }
-    .bal-neg { color: var(--deduct); }
+    .bal-pos { color: #0284c7; }
+    .bal-neg { color: #b91c1c; }
     .vendor-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.05); }
     .card-editing { border-color: var(--warning); background: #fffbeb; }
     
     .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -64,44 +64,48 @@
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
     input, select { padding: 11px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; width: 100%; background: #fff; appearance: none; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
     
-    .calc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    
-    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 0; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
-    .checkbox-group input { width: 20px; height: 20px; cursor: pointer; }
+    .calc-box { background: #e0f2fe; padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; align-items: center; }
+
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 0; font-weight: 600; font-size: 0.95rem; cursor: pointer; color: #0369a1; }
+    .checkbox-group input { width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary); }
 
     .form-btns { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; }
+    .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(2, 132, 199, 0.2); }
+    .btn-submit:active { background: var(--primary-hover); }
     .btn-submit.editing { background: var(--warning); }
     .btn-cancel { background: #e2e8f0; color: #334155; border: none; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
 
     .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 6px; flex-wrap: wrap; }
+    .filter-bar strong { color: #0369a1; }
     .filter-controls { display: flex; gap: 6px; align-items: center; }
     .date-filter-input { padding: 5px 8px; font-size: 0.85rem; width: auto; border-radius: 6px; }
     
-    .date-group-header { background: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: bold; padding: 5px 10px; border-radius: 6px; margin: 12px 0 8px 0; display: flex; justify-content: space-between; }
+    .date-group-header { background: #e0f2fe; color: #0369a1; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; border-radius: 6px; margin: 12px 0 8px 0; display: flex; justify-content: space-between; }
     .date-group-header:first-child { margin-top: 0; }
 
     .record-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .record-info { flex: 1; min-width: 0; }
     .record-header-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
-    .record-vendor { font-weight: bold; font-size: 0.95rem; }
-    .record-qty-tag { background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .record-vendor { font-weight: bold; font-size: 0.95rem; color: #0f172a; }
+    .record-qty-tag { background: #bae6fd; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     .record-desc { font-size: 0.9rem; color: #334155; margin: 4px 0; word-break: break-all; }
     .record-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 100%; gap: 6px; }
     
     .action-btns { display: flex; gap: 4px; }
     .status-btn { border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; transition: 0.1s; }
-    .status-yes { background: #dcfce7; color: var(--deposit); border: 1px solid #86efac; }
-    .status-no { background: #fee2e2; color: var(--deduct); border: 1px solid #fca5a5; }
+    .status-yes { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+    .status-no { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
     .status-btn:active { transform: scale(0.95); }
     
     .edit-btn { background: #fef3c7; border: none; color: #b45309; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
-    .del-btn { background: #fee2e2; border: none; color: var(--deduct); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
+    .del-btn { background: #fee2e2; border: none; color: #b91c1c; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
     
     .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
-    .badge-deposit { background: #dcfce7; color: var(--deposit); }
-    .badge-deduct { background: #fee2e2; color: var(--deduct); }
+    .badge-deposit { background: #e0f2fe; color: #0369a1; }
+    .badge-deduct { background: #fef2f2; color: #b91c1c; }
     
     .loading { text-align: center; padding: 20px; color: var(--muted); font-size: 0.9rem; }
     .hidden { display: none !important; }
@@ -111,7 +115,7 @@
 
 <div class="container">
   <h1>
-    <span>🍱 廠商便當記帳</span>
+    <span>🍱 廠商便當飲料記帳系統</span>
     <div class="header-btns">
       <button class="btn" onclick="toggleConfig()">⚙️ 設定基地</button>
       <button class="btn" onclick="fetchRecords()">🔄 同步</button>
@@ -126,14 +130,14 @@
     </div>
   </div>
 
-  <!-- 今日訂餐統計看板（隔日自動歸零重計） -->
+  <!-- 今日便當與飲料獨立統計看板 -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
         <span>📋 今日訂餐統計</span>
-        <span id="todayDateLabel" style="font-size:0.8rem; font-weight:normal; color:#cbd5e1;"></span>
+        <span id="todayDateLabel" style="font-size:0.8rem; font-weight:normal; color:#e0f2fe;"></span>
       </div>
-      <div class="today-total-badge" id="todayTotalQty">今日共 0 個</div>
+      <div class="today-total-badge" id="todayTotalBadge">便當 0 個 / 飲料 0 杯</div>
     </div>
     <div id="todayVendorList" class="today-list">
       <div class="today-empty">載入中...</div>
@@ -166,26 +170,34 @@
         </div>
         <div class="form-group">
           <label id="amountLabel">總金額 ($)</label>
-          <input type="number" id="amountInput" min="1" placeholder="輸入金額" required>
+          <input type="number" id="amountInput" min="1" placeholder="自動計算總金額" required>
         </div>
       </div>
 
-      <!-- 單價與數量計算區 -->
-      <div id="calcSection" style="margin-top: 10px; background: #f1f5f9; padding: 10px; border-radius: 8px;">
-        <label style="margin-bottom: 4px; display:block;">數量與單價計算 (輸入數量會自動計入今日便當總數)</label>
-        <div class="calc-row">
-          <input type="number" id="unitPriceInput" min="0" placeholder="單價" oninput="calculateTotal()">
-          <input type="number" id="qtyInput" min="0" placeholder="數量 (個)" oninput="calculateTotal()">
-          <input type="text" id="calcResultDisplay" readonly placeholder="總計自動算" style="background:#e2e8f0; font-weight:bold; text-align:center;">
+      <!-- 便當與飲料分開計算區 -->
+      <div id="calcSection" class="calc-box">
+        <label style="font-weight: bold; color:#0369a1;">🍱 便當與飲料分開計算</label>
+        
+        <div style="font-size: 0.85rem; font-weight: 600; color: #0284c7;">1. 便當計算</div>
+        <div class="calc-grid">
+          <input type="number" id="bentoPriceInput" min="0" placeholder="單價" oninput="calculateTotal()">
+          <input type="number" id="bentoQtyInput" min="0" placeholder="數量 (個)" oninput="calculateTotal()">
+          <input type="text" id="bentoSubtotal" readonly placeholder="便當小計" style="background:#bae6fd; font-weight:bold; text-align:center; color:#0369a1;">
+        </div>
+
+        <div style="font-size: 0.85rem; font-weight: 600; color: #0284c7; margin-top: 4px;">2. 飲料計算</div>
+        <div class="calc-grid">
+          <input type="number" id="drinkPriceInput" min="0" placeholder="單價" oninput="calculateTotal()">
+          <input type="number" id="drinkQtyInput" min="0" placeholder="數量 (杯)" oninput="calculateTotal()">
+          <input type="text" id="drinkSubtotal" readonly placeholder="飲料小計" style="background:#bae6fd; font-weight:bold; text-align:center; color:#0369a1;">
         </div>
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
-        <label>分述 (品項、數量、備註)</label>
+        <label>分述 (品項備註)</label>
         <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3" required>
       </div>
 
-      <!-- 預設取消勾選（未給），方便先記要訂幾個 -->
       <label class="checkbox-group" id="deliveredGroup">
         <input type="checkbox" id="deliveredInput">
         <span>已將便當／餐點交給廠商 (勾選代表已給，未勾選代表先登記數量)</span>
@@ -271,14 +283,20 @@
   }
 
   function calculateTotal() {
-    const price = parseFloat(document.getElementById('unitPriceInput').value) || 0;
-    const qty = parseFloat(document.getElementById('qtyInput').value) || 0;
-    if (price > 0 && qty > 0) {
-      const total = price * qty;
-      document.getElementById('amountInput').value = total;
-      document.getElementById('calcResultDisplay').value = `$${total}`;
-    } else {
-      document.getElementById('calcResultDisplay').value = '';
+    const bPrice = parseFloat(document.getElementById('bentoPriceInput').value) || 0;
+    const bQty = parseFloat(document.getElementById('bentoQtyInput').value) || 0;
+    const dPrice = parseFloat(document.getElementById('drinkPriceInput').value) || 0;
+    const dQty = parseFloat(document.getElementById('drinkQtyInput').value) || 0;
+
+    const bTotal = bPrice * bQty;
+    const dTotal = dPrice * dQty;
+    const grandTotal = bTotal + dTotal;
+
+    document.getElementById('bentoSubtotal').value = bTotal > 0 ? `$${bTotal}` : '';
+    document.getElementById('drinkSubtotal').value = dTotal > 0 ? `$${dTotal}` : '';
+    
+    if (grandTotal > 0) {
+      document.getElementById('amountInput').value = grandTotal;
     }
   }
 
@@ -310,7 +328,9 @@
     const editId = document.getElementById('editId').value;
     const isEditing = !!editId;
     const type = document.getElementById('typeInput').value;
-    const qtyVal = type === '扣款' ? (parseInt(document.getElementById('qtyInput').value, 10) || 0) : 0;
+    
+    const bQtyVal = type === '扣款' ? (parseInt(document.getElementById('bentoQtyInput').value, 10) || 0) : 0;
+    const dQtyVal = type === '扣款' ? (parseInt(document.getElementById('drinkQtyInput').value, 10) || 0) : 0;
     
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -325,7 +345,8 @@
       amount: document.getElementById('amountInput').value,
       description: document.getElementById('descInput').value.trim(),
       isDelivered: type === '扣款' ? document.getElementById('deliveredInput').checked : true,
-      qty: qtyVal
+      bentoQty: bQtyVal,
+      drinkQty: dQtyVal
     };
 
     try {
@@ -366,15 +387,13 @@
     document.getElementById('amountInput').value = record.amount;
     document.getElementById('descInput').value = record.description;
     document.getElementById('deliveredInput').checked = record.isDelivered;
-    document.getElementById('qtyInput').value = record.qty > 0 ? record.qty : '';
     
-    if (record.qty > 0 && record.amount > 0) {
-      document.getElementById('unitPriceInput').value = Math.round(record.amount / record.qty);
-      document.getElementById('calcResultDisplay').value = `$${record.amount}`;
-    } else {
-      document.getElementById('unitPriceInput').value = '';
-      document.getElementById('calcResultDisplay').value = '';
-    }
+    document.getElementById('bentoQtyInput').value = record.bentoQty > 0 ? record.bentoQty : '';
+    document.getElementById('drinkQtyInput').value = record.drinkQty > 0 ? record.drinkQty : '';
+    document.getElementById('bentoPriceInput').value = '';
+    document.getElementById('drinkPriceInput').value = '';
+    document.getElementById('bentoSubtotal').value = '';
+    document.getElementById('drinkSubtotal').value = '';
 
     toggleCalcFields();
 
@@ -392,10 +411,13 @@
     document.getElementById('editId').value = '';
     document.getElementById('recordForm').reset();
     document.getElementById('dateInput').value = getTodayString();
-    document.getElementById('unitPriceInput').value = '';
-    document.getElementById('qtyInput').value = '';
-    document.getElementById('calcResultDisplay').value = '';
-    document.getElementById('deliveredInput').checked = false; // 預設未給
+    document.getElementById('bentoPriceInput').value = '';
+    document.getElementById('bentoQtyInput').value = '';
+    document.getElementById('drinkPriceInput').value = '';
+    document.getElementById('drinkQtyInput').value = '';
+    document.getElementById('bentoSubtotal').value = '';
+    document.getElementById('drinkSubtotal').value = '';
+    document.getElementById('deliveredInput').checked = false;
     toggleCalcFields();
     document.getElementById('formTitle').textContent = '➕ 新增訂餐／扣款紀錄';
     document.getElementById('formTitle').style.color = 'var(--primary)';
@@ -421,49 +443,48 @@
     }
   }
 
-  function extractQty(r) {
-    if (r.type !== '扣款') return 0;
-    if (r.qty && r.qty > 0) return r.qty;
-    const matches = r.description.match(/[*xX×]\s*(\d+)/g);
-    if (matches) {
-      return matches.reduce((sum, m) => sum + parseInt(m.replace(/[*xX×\s]/g, ''), 10), 0);
-    }
-    return 0;
-  }
-
   function renderTodaySummary() {
     const todayStr = getTodayString();
     document.getElementById('todayDateLabel').textContent = `(${todayStr})`;
     
-    const todayVendorQty = {};
-    let totalToday = 0;
+    const todayVendorData = {};
+    let totalBento = 0;
+    let totalDrink = 0;
 
     allRecords.forEach(r => {
       if (r.date === todayStr && r.type === '扣款') {
-        const q = extractQty(r);
-        if (!todayVendorQty[r.vendor]) {
-          todayVendorQty[r.vendor] = 0;
+        const b = r.bentoQty || 0;
+        const d = r.drinkQty || 0;
+        if (!todayVendorData[r.vendor]) {
+          todayVendorData[r.vendor] = { bento: 0, drink: 0 };
         }
-        todayVendorQty[r.vendor] += q;
-        totalToday += q;
+        todayVendorData[r.vendor].bento += b;
+        todayVendorData[r.vendor].drink += d;
+        totalBento += b;
+        totalDrink += d;
       }
     });
 
-    document.getElementById('todayTotalQty').textContent = `今日共 ${totalToday} 個`;
+    document.getElementById('todayTotalBadge').textContent = `便當 ${totalBento} 個 / 飲料 ${totalDrink} 杯`;
     const listEl = document.getElementById('todayVendorList');
-    const vendors = Object.keys(todayVendorQty);
+    const vendors = Object.keys(todayVendorData);
 
     if (vendors.length === 0) {
       listEl.innerHTML = '<div class="today-empty">今日尚無廠商訂購登記（跨日已自動歸零）</div>';
       return;
     }
 
-    listEl.innerHTML = vendors.map(v => `
-      <div class="today-chip">
-        <span>${v}</span>
-        <strong>${todayVendorQty[v]} 個</strong>
-      </div>
-    `).join('');
+    listEl.innerHTML = vendors.map(v => {
+      const item = todayVendorData[v];
+      return `
+        <div class="today-chip">
+          <strong>${v}</strong>
+          <div class="today-chip-row">
+            <span>便當: ${item.bento}個</span> | <span>飲料: ${item.drink}杯</span>
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   function renderDashboard() {
@@ -558,24 +579,31 @@
     let html = '';
     Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
       const dayRecords = groupedByDate[dateKey];
-      const dayTotalQty = dayRecords.reduce((sum, r) => sum + extractQty(r), 0);
+      const dayBentoTotal = dayRecords.reduce((sum, r) => sum + (r.bentoQty || 0), 0);
+      const dayDrinkTotal = dayRecords.reduce((sum, r) => sum + (r.drinkQty || 0), 0);
       
       html += `
         <div class="date-group-header">
           <span>📅 ${dateKey} ${dateKey === getTodayString() ? '(今天)' : ''}</span>
-          <span>當日共訂 ${dayTotalQty} 個</span>
+          <span>當日訂: 便當 ${dayBentoTotal} 個 / 飲料 ${dayDrinkTotal} 杯</span>
         </div>
       `;
 
       html += dayRecords.map(r => {
-        const itemQty = extractQty(r);
+        const b = r.bentoQty || 0;
+        const d = r.drinkQty || 0;
+        let qtyText = '';
+        if (b > 0 && d > 0) qtyText = `便當 ${b}個 / 飲料 ${d}杯`;
+        else if (b > 0) qtyText = `便當 ${b}個`;
+        else if (d > 0) qtyText = `飲料 ${d}杯`;
+
         return `
           <div class="record-item">
             <div class="record-info">
               <div class="record-header-row">
                 <span class="record-vendor">${r.vendor}</span>
                 <span class="badge ${r.type === '寄款' ? 'badge-deposit' : 'badge-deduct'}">${r.type}</span>
-                ${r.type === '扣款' && itemQty > 0 ? `<span class="record-qty-tag">${itemQty} 個</span>` : ''}
+                ${r.type === '扣款' && qtyText ? `<span class="record-qty-tag">${qtyText}</span>` : ''}
                 ${r.type === '扣款' ? `
                   <button class="status-btn ${r.isDelivered ? 'status-yes' : 'status-no'}" onclick="toggleDelivered('${r.id}')">
                     ${r.isDelivered ? '✓ 已給廠商' : '✗ 未給廠商'}
