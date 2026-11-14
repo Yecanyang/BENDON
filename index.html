@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>廠商便當飲料寄款與扣款系統</title>
+  <title>廠商便當飲料記帳系統</title>
   <style>
     :root {
       --primary: #2563eb;
@@ -54,6 +54,11 @@
     label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
     input, select { padding: 11px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; width: 100%; background: #fff; appearance: none; }
     
+    .calc-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    
+    .checkbox-group { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 0; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+    .checkbox-group input { width: 20px; height: 20px; cursor: pointer; }
+
     .form-btns { display: flex; gap: 8px; margin-top: 10px; }
     .btn-submit { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%; }
     .btn-submit.editing { background: var(--warning); }
@@ -72,6 +77,10 @@
     .record-amount { font-size: 1rem; font-weight: bold; white-space: nowrap; }
     
     .action-btns { display: flex; gap: 4px; }
+    .status-btn { border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
+    .status-yes { background: #dcfce7; color: var(--deposit); }
+    .status-no { background: #fee2e2; color: var(--deduct); }
+    
     .edit-btn { background: #fef3c7; border: none; color: #b45309; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
     .del-btn { background: #fee2e2; border: none; color: var(--deduct); padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: 500; }
     
@@ -121,20 +130,37 @@
         </div>
         <div class="form-group">
           <label>帳務類型</label>
-          <select id="typeInput" required>
+          <select id="typeInput" onchange="toggleCalcFields()" required>
             <option value="扣款">➖ 扣款 (訂便當/飲料)</option>
             <option value="寄款">➕ 寄款 (廠商預繳)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>金額 ($)</label>
+          <label id="amountLabel">金額 ($)</label>
           <input type="number" id="amountInput" min="1" placeholder="輸入金額" required>
         </div>
       </div>
+
+      <!-- 自動計算區 (僅扣款時顯示) -->
+      <div id="calcSection" style="margin-top: 10px; background: #f1f5f9; padding: 10px; border-radius: 8px;">
+        <label style="margin-bottom: 4px; display:block;">數量與單價快速計算 (選填)</label>
+        <div class="calc-row">
+          <input type="number" id="unitPriceInput" min="0" placeholder="單價" oninput="calculateTotal()">
+          <input type="number" id="qtyInput" min="0" placeholder="數量" oninput="calculateTotal()">
+          <input type="text" id="calcResultDisplay" readonly placeholder="總計自動算" style="background:#e2e8f0; font-weight:bold; text-align:center;">
+        </div>
+      </div>
+
       <div class="form-group" style="margin-top: 10px;">
         <label>分述 (品項、數量、備註)</label>
         <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3" required>
       </div>
+
+      <label class="checkbox-group">
+        <input type="checkbox" id="deliveredInput" checked>
+        <span>已將便當／餐點交給廠商</span>
+      </label>
+
       <div class="form-btns">
         <button type="submit" id="submitBtn" class="btn-submit">儲存並同步至雲端</button>
         <button type="button" id="cancelBtn" class="btn-cancel hidden" onclick="cancelEdit()">取消</button>
@@ -189,6 +215,28 @@
     fetchRecords();
   }
 
+  function toggleCalcFields() {
+    const type = document.getElementById('typeInput').value;
+    const calcSec = document.getElementById('calcSection');
+    if (type === '寄款') {
+      calcSec.classList.add('hidden');
+    } else {
+      calcSec.classList.remove('hidden');
+    }
+  }
+
+  function calculateTotal() {
+    const price = parseFloat(document.getElementById('unitPriceInput').value) || 0;
+    const qty = parseFloat(document.getElementById('qtyInput').value) || 0;
+    if (price > 0 && qty > 0) {
+      const total = price * qty;
+      document.getElementById('amountInput').value = total;
+      document.getElementById('calcResultDisplay').value = `$${total}`;
+    } else {
+      document.getElementById('calcResultDisplay').value = '';
+    }
+  }
+
   async function fetchRecords() {
     if (!GAS_URL) {
       document.getElementById('configCard').classList.remove('hidden');
@@ -200,7 +248,7 @@
       const res = await fetch(GAS_URL);
       const json = await res.json();
       if (json.status === 'success') {
-        allRecords = json.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+        allRecords = json.data.sort((a, b) => new Date(b.date) - new Date(b.date) || 0);
         renderDashboard();
       }
     } catch (err) {
@@ -228,7 +276,8 @@
       vendor: document.getElementById('vendorInput').value.trim(),
       type: document.getElementById('typeInput').value,
       amount: document.getElementById('amountInput').value,
-      description: document.getElementById('descInput').value.trim()
+      description: document.getElementById('descInput').value.trim(),
+      isDelivered: document.getElementById('deliveredInput').checked
     };
 
     try {
@@ -247,7 +296,18 @@
     }
   }
 
-  // 點擊修改按鈕：將資料載入到上方表單
+  async function toggleDelivered(id) {
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'toggle', id: id })
+      });
+      await fetchRecords();
+    } catch (err) {
+      alert('狀態更新失敗');
+    }
+  }
+
   function startEdit(id) {
     const record = allRecords.find(r => r.id === id);
     if (!record) return;
@@ -258,6 +318,9 @@
     document.getElementById('typeInput').value = record.type;
     document.getElementById('amountInput').value = record.amount;
     document.getElementById('descInput').value = record.description;
+    document.getElementById('deliveredInput').checked = record.isDelivered;
+
+    toggleCalcFields();
 
     document.getElementById('formTitle').textContent = `✏️ 正在修改紀錄：${record.vendor} (${record.date})`;
     document.getElementById('formTitle').style.color = 'var(--warning)';
@@ -273,6 +336,11 @@
     document.getElementById('editId').value = '';
     document.getElementById('recordForm').reset();
     document.getElementById('dateInput').valueAsDate = new Date();
+    document.getElementById('unitPriceInput').value = '';
+    document.getElementById('qtyInput').value = '';
+    document.getElementById('calcResultDisplay').value = '';
+    document.getElementById('deliveredInput').checked = true;
+    toggleCalcFields();
     document.getElementById('formTitle').textContent = '➕ 新增帳務紀錄';
     document.getElementById('formTitle').style.color = 'var(--primary)';
     document.getElementById('formCard').classList.remove('card-editing');
@@ -371,6 +439,9 @@
             <span class="record-date">${r.date}</span>
             <span class="record-vendor">${r.vendor}</span>
             <span class="badge ${r.type === '寄款' ? 'badge-deposit' : 'badge-deduct'}">${r.type}</span>
+            <button class="status-btn ${r.isDelivered ? 'status-yes' : 'status-no'}" onclick="toggleDelivered('${r.id}')">
+              ${r.isDelivered ? '✓ 已給廠商' : '✗ 未給廠商'}
+            </button>
           </div>
           <div class="record-desc">${r.description}</div>
         </div>
