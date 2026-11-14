@@ -31,6 +31,17 @@
     .config-card input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background: #fff; }
     .config-card button { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; white-space: nowrap; }
 
+    /* 今日訂餐統計看板 */
+    .today-card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #ffffff; border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 8px; }
+    .today-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
+    .today-total-badge { background: #f59e0b; color: #1e293b; font-weight: 800; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
+    .today-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .today-chip { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    .today-chip strong { color: #fde047; font-size: 0.95rem; }
+    .today-empty { font-size: 0.85rem; color: #cbd5e1; }
+
+    /* 廠商餘額卡片 */
     .vendor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
     @media (min-width: 640px) {
       .vendor-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
@@ -64,17 +75,21 @@
     .btn-submit.editing { background: var(--warning); }
     .btn-cancel { background: #e2e8f0; color: #334155; border: none; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; }
 
-    .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 6px; }
-    .filter-bar strong { font-size: 0.95rem; }
+    /* 明細篩選與日期分組 */
+    .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 6px; flex-wrap: wrap; }
+    .filter-controls { display: flex; gap: 6px; align-items: center; }
+    .date-filter-input { padding: 5px 8px; font-size: 0.85rem; width: auto; border-radius: 6px; }
     
+    .date-group-header { background: #e2e8f0; color: #334155; font-size: 0.8rem; font-weight: bold; padding: 5px 10px; border-radius: 6px; margin: 12px 0 8px 0; display: flex; justify-content: space-between; }
+    .date-group-header:first-child { margin-top: 0; }
+
     .record-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .record-info { flex: 1; min-width: 0; }
     .record-header-row { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
-    .record-date { font-size: 0.75rem; color: var(--muted); }
-    .record-vendor { font-weight: bold; font-size: 0.9rem; }
+    .record-vendor { font-weight: bold; font-size: 0.95rem; }
+    .record-qty-tag { background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
     .record-desc { font-size: 0.9rem; color: #334155; margin: 4px 0; word-break: break-all; }
     .record-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 100%; gap: 6px; }
-    .record-amount { font-size: 1rem; font-weight: bold; white-space: nowrap; }
     
     .action-btns { display: flex; gap: 4px; }
     .status-btn { border: none; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; cursor: pointer; font-weight: bold; }
@@ -111,6 +126,21 @@
     </div>
   </div>
 
+  <!-- 今日便當訂購統計看板（隔日自動歸零重計） -->
+  <div class="today-card">
+    <div class="today-header">
+      <div class="today-title">
+        <span>📋 今日訂餐統計</span>
+        <span id="todayDateLabel" style="font-size:0.8rem; font-weight:normal; color:#cbd5e1;"></span>
+      </div>
+      <div class="today-total-badge" id="todayTotalQty">今日共 0 個</div>
+    </div>
+    <div id="todayVendorList" class="today-list">
+      <div class="today-empty">載入中...</div>
+    </div>
+  </div>
+
+  <!-- 各廠商獨立餘額總覽 -->
   <div id="vendorGrid" class="vendor-grid"></div>
 
   <!-- 新增 / 修改表單區 -->
@@ -136,17 +166,17 @@
           </select>
         </div>
         <div class="form-group">
-          <label id="amountLabel">金額 ($)</label>
+          <label id="amountLabel">總金額 ($)</label>
           <input type="number" id="amountInput" min="1" placeholder="輸入金額" required>
         </div>
       </div>
 
-      <!-- 自動計算區 (僅扣款時顯示) -->
+      <!-- 單價與數量計算區 (扣款時顯示，數量同步計入今日便當數) -->
       <div id="calcSection" style="margin-top: 10px; background: #f1f5f9; padding: 10px; border-radius: 8px;">
-        <label style="margin-bottom: 4px; display:block;">數量與單價快速計算 (選填)</label>
+        <label style="margin-bottom: 4px; display:block;">數量與單價計算 (輸入數量會自動計入今日便當總數)</label>
         <div class="calc-row">
           <input type="number" id="unitPriceInput" min="0" placeholder="單價" oninput="calculateTotal()">
-          <input type="number" id="qtyInput" min="0" placeholder="數量" oninput="calculateTotal()">
+          <input type="number" id="qtyInput" min="0" placeholder="數量 (個)" oninput="calculateTotal()">
           <input type="text" id="calcResultDisplay" readonly placeholder="總計自動算" style="background:#e2e8f0; font-weight:bold; text-align:center;">
         </div>
       </div>
@@ -156,7 +186,7 @@
         <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3" required>
       </div>
 
-      <label class="checkbox-group">
+      <label class="checkbox-group" id="deliveredGroup">
         <input type="checkbox" id="deliveredInput" checked>
         <span>已將便當／餐點交給廠商</span>
       </label>
@@ -168,10 +198,14 @@
     </form>
   </div>
 
+  <!-- 每日帳務明細區 -->
   <div class="card">
     <div class="filter-bar">
-      <strong id="tableTitle">全部明細</strong>
-      <button class="btn" onclick="selectVendor('ALL')">顯示全部</button>
+      <strong id="tableTitle">每日明細</strong>
+      <div class="filter-controls">
+        <input type="date" id="filterDateInput" class="date-filter-input" onchange="renderList()" title="篩選特定日期">
+        <button class="btn" onclick="resetFilters()">全部顯示</button>
+      </div>
     </div>
     <div id="recordListBody">
       <div class="loading">載入雲端資料中...</div>
@@ -184,7 +218,17 @@
   let selectedVendor = 'ALL';
   let GAS_URL = localStorage.getItem('BENTO_GAS_URL') || '';
 
-  document.getElementById('dateInput').valueAsDate = new Date();
+  // 取得當地 YYYY-MM-DD 今日日期字串
+  function getTodayString() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  document.getElementById('dateInput').value = getTodayString();
+  document.getElementById('todayDateLabel').textContent = `(${getTodayString()})`;
 
   window.addEventListener('DOMContentLoaded', () => {
     if (!GAS_URL) {
@@ -218,10 +262,13 @@
   function toggleCalcFields() {
     const type = document.getElementById('typeInput').value;
     const calcSec = document.getElementById('calcSection');
+    const delGroup = document.getElementById('deliveredGroup');
     if (type === '寄款') {
       calcSec.classList.add('hidden');
+      delGroup.classList.add('hidden');
     } else {
       calcSec.classList.remove('hidden');
+      delGroup.classList.remove('hidden');
     }
   }
 
@@ -248,7 +295,7 @@
       const res = await fetch(GAS_URL);
       const json = await res.json();
       if (json.status === 'success') {
-        allRecords = json.data.sort((a, b) => new Date(b.date) - new Date(b.date) || 0);
+        allRecords = json.data.sort((a, b) => b.date.localeCompare(a.date));
         renderDashboard();
       }
     } catch (err) {
@@ -264,6 +311,8 @@
     }
     const editId = document.getElementById('editId').value;
     const isEditing = !!editId;
+    const type = document.getElementById('typeInput').value;
+    const qtyVal = type === '扣款' ? (parseInt(document.getElementById('qtyInput').value, 10) || 0) : 0;
     
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -274,10 +323,11 @@
       id: editId,
       date: document.getElementById('dateInput').value,
       vendor: document.getElementById('vendorInput').value.trim(),
-      type: document.getElementById('typeInput').value,
+      type: type,
       amount: document.getElementById('amountInput').value,
       description: document.getElementById('descInput').value.trim(),
-      isDelivered: document.getElementById('deliveredInput').checked
+      isDelivered: type === '扣款' ? document.getElementById('deliveredInput').checked : true,
+      qty: qtyVal
     };
 
     try {
@@ -286,7 +336,6 @@
         body: JSON.stringify(payload)
       });
       cancelEdit();
-      document.getElementById('dateInput').valueAsDate = new Date();
       await fetchRecords();
     } catch (err) {
       alert('儲存發生錯誤');
@@ -319,6 +368,15 @@
     document.getElementById('amountInput').value = record.amount;
     document.getElementById('descInput').value = record.description;
     document.getElementById('deliveredInput').checked = record.isDelivered;
+    document.getElementById('qtyInput').value = record.qty > 0 ? record.qty : '';
+    
+    if (record.qty > 0 && record.amount > 0) {
+      document.getElementById('unitPriceInput').value = Math.round(record.amount / record.qty);
+      document.getElementById('calcResultDisplay').value = `$${record.amount}`;
+    } else {
+      document.getElementById('unitPriceInput').value = '';
+      document.getElementById('calcResultDisplay').value = '';
+    }
 
     toggleCalcFields();
 
@@ -335,7 +393,7 @@
   function cancelEdit() {
     document.getElementById('editId').value = '';
     document.getElementById('recordForm').reset();
-    document.getElementById('dateInput').valueAsDate = new Date();
+    document.getElementById('dateInput').value = getTodayString();
     document.getElementById('unitPriceInput').value = '';
     document.getElementById('qtyInput').value = '';
     document.getElementById('calcResultDisplay').value = '';
@@ -365,7 +423,55 @@
     }
   }
 
+  // 從數量欄位或分述文字解析便當數（相容舊資料）
+  function extractQty(r) {
+    if (r.type !== '扣款') return 0;
+    if (r.qty && r.qty > 0) return r.qty;
+    const matches = r.description.match(/[*xX×]\s*(\d+)/g);
+    if (matches) {
+      return matches.reduce((sum, m) => sum + parseInt(m.replace(/[*xX×\s]/g, ''), 10), 0);
+    }
+    return 0;
+  }
+
+  function renderTodaySummary() {
+    const todayStr = getTodayString();
+    document.getElementById('todayDateLabel').textContent = `(${todayStr})`;
+    
+    const todayVendorQty = {};
+    let totalToday = 0;
+
+    allRecords.forEach(r => {
+      if (r.date === todayStr && r.type === '扣款') {
+        const q = extractQty(r);
+        if (!todayVendorQty[r.vendor]) {
+          todayVendorQty[r.vendor] = 0;
+        }
+        todayVendorQty[r.vendor] += q;
+        totalToday += q;
+      }
+    });
+
+    document.getElementById('todayTotalQty').textContent = `今日共 ${totalToday} 個`;
+    const listEl = document.getElementById('todayVendorList');
+    const vendors = Object.keys(todayVendorQty);
+
+    if (vendors.length === 0) {
+      listEl.innerHTML = '<div class="today-empty">今日尚無廠商訂購紀錄（跨日已自動歸零重計）</div>';
+      return;
+    }
+
+    listEl.innerHTML = vendors.map(v => `
+      <div class="today-chip">
+        <span>${v}</span>
+        <strong>${todayVendorQty[v]} 個</strong>
+      </div>
+    `).join('');
+  }
+
   function renderDashboard() {
+    renderTodaySummary();
+
     const vendorStats = {};
     allRecords.forEach(r => {
       if (!vendorStats[r.vendor]) {
@@ -416,46 +522,87 @@
     renderDashboard();
   }
 
+  function resetFilters() {
+    selectedVendor = 'ALL';
+    document.getElementById('filterDateInput').value = '';
+    renderDashboard();
+  }
+
   function renderList() {
     const container = document.getElementById('recordListBody');
     const title = document.getElementById('tableTitle');
-    const filtered = selectedVendor === 'ALL' 
-      ? allRecords 
-      : allRecords.filter(r => r.vendor === selectedVendor);
+    const filterDate = document.getElementById('filterDateInput').value;
+
+    let filtered = allRecords;
+    if (selectedVendor !== 'ALL') {
+      filtered = filtered.filter(r => r.vendor === selectedVendor);
+    }
+    if (filterDate) {
+      filtered = filtered.filter(r => r.date === filterDate);
+    }
 
     title.textContent = selectedVendor === 'ALL' 
-      ? `全部明細 (${filtered.length})` 
-      : `【${selectedVendor}】 (${filtered.length})`;
+      ? `每日明細 (${filtered.length})` 
+      : `【${selectedVendor}】明細 (${filtered.length})`;
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div class="loading">目前尚無紀錄</div>';
+      container.innerHTML = '<div class="loading">符合條件的紀錄為 0 筆</div>';
       return;
     }
 
-    container.innerHTML = filtered.map(r => `
-      <div class="record-item">
-        <div class="record-info">
-          <div class="record-header-row">
-            <span class="record-date">${r.date}</span>
-            <span class="record-vendor">${r.vendor}</span>
-            <span class="badge ${r.type === '寄款' ? 'badge-deposit' : 'badge-deduct'}">${r.type}</span>
-            <button class="status-btn ${r.isDelivered ? 'status-yes' : 'status-no'}" onclick="toggleDelivered('${r.id}')">
-              ${r.isDelivered ? '✓ 已給廠商' : '✗ 未給廠商'}
-            </button>
-          </div>
-          <div class="record-desc">${r.description}</div>
+    // 依日期分組顯示每日明細
+    const groupedByDate = {};
+    filtered.forEach(r => {
+      if (!groupedByDate[r.date]) {
+        groupedByDate[r.date] = [];
+      }
+      groupedByDate[r.date].push(r);
+    });
+
+    let html = '';
+    Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
+      const dayRecords = groupedByDate[dateKey];
+      const dayTotalQty = dayRecords.reduce((sum, r) => sum + extractQty(r), 0);
+      
+      html += `
+        <div class="date-group-header">
+          <span>📅 ${dateKey} ${dateKey === getTodayString() ? '(今天)' : ''}</span>
+          <span>當日共 ${dayTotalQty} 個</span>
         </div>
-        <div class="record-right">
-          <div style="font-weight:bold; color:${r.type === '寄款' ? 'var(--deposit)' : 'var(--deduct)'}">
-            ${r.type === '寄款' ? '+' : '-'}$${r.amount.toLocaleString()}
+      `;
+
+      html += dayRecords.map(r => {
+        const itemQty = extractQty(r);
+        return `
+          <div class="record-item">
+            <div class="record-info">
+              <div class="record-header-row">
+                <span class="record-vendor">${r.vendor}</span>
+                <span class="badge ${r.type === '寄款' ? 'badge-deposit' : 'badge-deduct'}">${r.type}</span>
+                ${r.type === '扣款' && itemQty > 0 ? `<span class="record-qty-tag">${itemQty} 個</span>` : ''}
+                ${r.type === '扣款' ? `
+                  <button class="status-btn ${r.isDelivered ? 'status-yes' : 'status-no'}" onclick="toggleDelivered('${r.id}')">
+                    ${r.isDelivered ? '✓ 已給廠商' : '✗ 未給廠商'}
+                  </button>
+                ` : ''}
+              </div>
+              <div class="record-desc">${r.description}</div>
+            </div>
+            <div class="record-right">
+              <div style="font-weight:bold; color:${r.type === '寄款' ? 'var(--deposit)' : 'var(--deduct)'}">
+                ${r.type === '寄款' ? '+' : '-'}$${r.amount.toLocaleString()}
+              </div>
+              <div class="action-btns">
+                <button class="edit-btn" onclick="startEdit('${r.id}')">修改</button>
+                <button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button>
+              </div>
+            </div>
           </div>
-          <div class="action-btns">
-            <button class="edit-btn" onclick="startEdit('${r.id}')">修改</button>
-            <button class="del-btn" onclick="deleteRecord('${r.id}')">刪除</button>
-          </div>
-        </div>
-      </div>
-    `).join('');
+        `;
+      }).join('');
+    });
+
+    container.innerHTML = html;
   }
 </script>
 </body>
