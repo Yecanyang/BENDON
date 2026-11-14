@@ -33,9 +33,9 @@
 
     /* 今日訂餐統計看板 */
     .today-card { background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); color: #ffffff; border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(3, 105, 161, 0.2); }
-    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; }
+    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; flex-wrap: wrap; gap: 6px; }
     .today-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
-    .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 3px 10px; border-radius: 20px; font-size: 0.9rem; }
+    .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; }
     .today-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .today-chip { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; }
     .today-chip-row { display: flex; gap: 6px; align-items: center; }
@@ -130,6 +130,7 @@
     </div>
   </div>
 
+  <!-- 今日訂餐統計看板 (右上角與下方同步顯示) -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -457,13 +458,15 @@
       if (r.date === todayStr && r.type === '扣款') {
         const b = r.bentoQty || 0;
         const d = r.drinkQty || 0;
-        if (!todayVendorData[r.vendor]) {
-          todayVendorData[r.vendor] = { bento: 0, drink: 0 };
+        if (b > 0 || d > 0) {
+          if (!todayVendorData[r.vendor]) {
+            todayVendorData[r.vendor] = { bento: 0, drink: 0 };
+          }
+          todayVendorData[r.vendor].bento += b;
+          todayVendorData[r.vendor].drink += d;
+          totalBento += b;
+          totalDrink += d;
         }
-        todayVendorData[r.vendor].bento += b;
-        todayVendorData[r.vendor].drink += d;
-        totalBento += b;
-        totalDrink += d;
       }
     });
 
@@ -478,31 +481,41 @@
 
     listEl.innerHTML = vendors.map(v => {
       const item = todayVendorData[v];
-      return `
-        <div class="today-chip">
-          <strong>${v}</strong>
-          <div class="today-chip-row">
-            <span>便當: ${item.bento}個</span> | <span>飲料: ${item.drink}杯</span>
-          </div>
-        </div>
-      `;
+      let text = `<strong>${v}</strong>: `;
+      let parts = [];
+      if (item.bento > 0) parts.push(`便當 ${item.bento}個`);
+      if (item.drink > 0) parts.push(`飲料 ${item.drink}杯`);
+      text += parts.join(' / ');
+      return `<div class="today-chip">${text}</div>`;
     }).join('');
   }
 
   function renderDashboard() {
     renderTodaySummary();
 
+    const todayStr = getTodayString();
     const vendorStats = {};
+
     allRecords.forEach(r => {
       if (!vendorStats[r.vendor]) {
-        vendorStats[r.vendor] = { deposit: 0, deduct: 0, balance: 0 };
+        vendorStats[r.vendor] = { totalDeposit: 0, totalDeduct: 0, balance: 0, todayDeposit: 0, todayDeduct: 0 };
       }
+      // 累計總餘額 (所有歷史記錄計算)
       if (r.type === '寄款') {
-        vendorStats[r.vendor].deposit += r.amount;
+        vendorStats[r.vendor].totalDeposit += r.amount;
         vendorStats[r.vendor].balance += r.amount;
       } else {
-        vendorStats[r.vendor].deduct += r.amount;
+        vendorStats[r.vendor].totalDeduct += r.amount;
         vendorStats[r.vendor].balance -= r.amount;
+      }
+
+      // 僅計算今天的寄款與扣款金額
+      if (r.date === todayStr) {
+        if (r.type === '寄款') {
+          vendorStats[r.vendor].todayDeposit += r.amount;
+        } else {
+          vendorStats[r.vendor].todayDeduct += r.amount;
+        }
       }
     });
 
@@ -522,7 +535,7 @@
         <div class="vendor-balance ${isPos ? 'bal-pos' : 'bal-neg'}">
           ${isPos ? '餘' : '欠'}$${Math.abs(stat.balance).toLocaleString()}
         </div>
-        <div class="vendor-meta">寄$${stat.deposit.toLocaleString()} / 扣$${stat.deduct.toLocaleString()}</div>
+        <div class="vendor-meta">寄$${stat.todayDeposit.toLocaleString()} / 扣$${stat.todayDeduct.toLocaleString()} (今日)</div>
       `;
       grid.appendChild(card);
 
