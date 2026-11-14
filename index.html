@@ -95,13 +95,13 @@
     .record-right { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; height: 100%; gap: 6px; }
     
     .action-btns { display: flex; gap: 4px; }
-    .status-btn { border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: bold; transition: 0.1s; }
+    .status-btn { border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: bold; transition: 0.1s; z-index: 5; }
     .status-yes { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
     .status-no { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
     .status-btn:active { transform: scale(0.95); }
     
-    .edit-btn { background: #fef3c7; border: none; color: #b45309; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
-    .del-btn { background: #fee2e2; border: none; color: #b91c1c; padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
+    .edit-btn { background: #fef3c7; border: none; color: #b45309; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
+    .del-btn { background: #fee2e2; border: none; color: #b91c1c; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 500; }
     
     .badge { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
     .badge-deposit { background: #e0f2fe; color: #0369a1; }
@@ -130,7 +130,6 @@
     </div>
   </div>
 
-  <!-- 今日便當與飲料獨立統計看板 -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -146,7 +145,6 @@
 
   <div id="vendorGrid" class="vendor-grid"></div>
 
-  <!-- 新增 / 修改表單區 -->
   <div class="card" id="formCard">
     <div id="formTitle" style="font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; color: var(--primary);">➕ 新增訂餐／扣款紀錄</div>
     <form id="recordForm" onsubmit="submitRecord(event)">
@@ -174,7 +172,6 @@
         </div>
       </div>
 
-      <!-- 便當與飲料分開計算區 -->
       <div id="calcSection" class="calc-box">
         <label style="font-weight: bold; color:#0369a1;">🍱 便當與飲料分開計算</label>
         
@@ -366,13 +363,18 @@
 
   async function toggleDelivered(id) {
     try {
-      await fetch(GAS_URL, {
+      const res = await fetch(GAS_URL, {
         method: 'POST',
         body: JSON.stringify({ action: 'toggle', id: id })
       });
-      await fetchRecords();
+      const json = await res.json();
+      if (json.status === 'success') {
+        await fetchRecords();
+      } else {
+        alert('狀態切換失敗');
+      }
     } catch (err) {
-      alert('狀態更新失敗');
+      alert('狀態更新發生錯誤');
     }
   }
 
