@@ -129,6 +129,7 @@
     </div>
   </div>
 
+  <!-- 今日訂餐統計看板 -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -144,6 +145,7 @@
 
   <div id="vendorGrid" class="vendor-grid"></div>
 
+  <!-- 新增 / 修改表單區 -->
   <div class="card" id="formCard">
     <div id="formTitle" style="font-weight: bold; margin-bottom: 10px; font-size: 0.95rem; color: var(--primary);">➕ 新增訂餐／扣款紀錄</div>
     <form id="recordForm" onsubmit="submitRecord(event)">
@@ -171,6 +173,7 @@
         </div>
       </div>
 
+      <!-- 便當與飲料分開計算區 -->
       <div id="calcSection" class="calc-box">
         <label style="font-weight: bold; color:#0369a1;">🍱 便當與飲料分開計算</label>
         
@@ -206,6 +209,7 @@
     </form>
   </div>
 
+  <!-- 每日明細區 -->
   <div class="card">
     <div class="filter-bar">
       <strong id="tableTitle">每日明細</strong>
@@ -224,6 +228,27 @@
   let allRecords = [];
   let selectedVendor = 'ALL';
   let GAS_URL = localStorage.getItem('BENTO_GAS_URL') || '';
+
+  // 標準化日期格式，無論試算表回傳 YYYY/M/D、ISO字串或 YYYY-MM-DD 皆統一轉為 YYYY-MM-DD
+  function normalizeDate(rawDate) {
+    if (!rawDate) return '';
+    const str = String(rawDate).trim();
+    const match = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (match) {
+      const y = match[1];
+      const m = match[2].padStart(2, '0');
+      const d = match[3].padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      const y = parsed.getFullYear();
+      const m = String(parsed.getMonth() + 1).padStart(2, '0');
+      const d = String(parsed.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    return str;
+  }
 
   function getTodayString() {
     const now = new Date();
@@ -296,6 +321,32 @@
     }
   }
 
+  // 解析數量：優先採用專屬欄位，若無則從分述文字自動萃取
+  function parseQuantities(r) {
+    let b = Number(r.bentoQty) || 0;
+    let d = Number(r.drinkQty) || 0;
+
+    if (r.type === '扣款' && b === 0 && d === 0 && r.description) {
+      const desc = String(r.description);
+      // 嘗試比對飲料關鍵字後方的數字
+      const drinkMatch = desc.match(/(?:飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|湯)[*xX×\s]*(\d+)/);
+      if (drinkMatch) {
+        d = parseInt(drinkMatch[1], 10) || 0;
+      }
+      // 嘗試比對便當關鍵字或一般 *數字
+      const bentoMatch = desc.match(/(?:便當|排骨|雞腿|控肉|三寶|招牌|魚排|豬排|滷肉|飯)[*xX×\s]*(\d+)/);
+      if (bentoMatch) {
+        b = parseInt(bentoMatch[1], 10) || 0;
+      } else if (d === 0) {
+        const genericMatch = desc.match(/[*xX×]\s*(\d+)/);
+        if (genericMatch) {
+          b = parseInt(genericMatch[1], 10) || 0;
+        }
+      }
+    }
+    return { b, d };
+  }
+
   async function fetchRecords() {
     if (!GAS_URL) {
       document.getElementById('configCard').classList.remove('hidden');
@@ -307,13 +358,22 @@
       const res = await fetch(GAS_URL);
       const json = await res.json();
       if (json.status === 'success') {
-        // 確保最新日期的排在最上面
-        allRecords = json.data.map(r => ({
-          ...r,
-          bentoQty: Number(r.bentoQty) || 0,
-          drinkQty: Number(r.drinkQty) || 0,
-          amount: Number(r.amount) || 0
-        })).sort((a, b) => b.date.localeCompare(a.date));
+        allRecords = json.data.map((r, index) => {
+          const cleanDate = normalizeDate(r.date);
+          const qtys = parseQuantities(r);
+          return {
+            ...r,
+            date: cleanDate,
+            bentoQty: qtys.b,
+            drinkQty: qtys.d,
+            amount: Number(r.amount) || 0,
+            _order: index
+          };
+        }).sort((a, b) => {
+          // 最新日期在最上面，同日期則最新輸入的在最上面
+          const dateDiff = b.date.localeCompare(a.date);
+          return dateDiff !== 0 ? dateDiff : b._order - a._order;
+        });
         renderDashboard();
       }
     } catch (err) {
@@ -485,12 +545,10 @@
 
     listEl.innerHTML = vendors.map(v => {
       const item = todayVendorData[v];
-      let text = `<strong>${v}</strong>: `;
       let parts = [];
       if (item.bento > 0) parts.push(`便當 ${item.bento}個`);
       if (item.drink > 0) parts.push(`飲料 ${item.drink}杯`);
-      text += parts.join(' / ');
-      return `<div class="today-chip">${text}</div>`;
+      return `<div class="today-chip"><strong>${v}</strong>: ${parts.join(' / ')}</div>`;
     }).join('');
   }
 
@@ -504,7 +562,7 @@
       if (!vendorStats[r.vendor]) {
         vendorStats[r.vendor] = { balance: 0, todayDeposit: 0, todayDeduct: 0 };
       }
-      // 累計總餘額 (所有歷史記錄計算)
+      // 累計總餘額（所有歷史紀錄跨日保留）
       if (r.type === '寄款') {
         vendorStats[r.vendor].balance += r.amount;
       } else {
@@ -594,7 +652,7 @@
     });
 
     let html = '';
-    // 明細日期由新到舊排序
+    // 最新日期排在最上面
     Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
       const dayRecords = groupedByDate[dateKey];
       const dayBentoTotal = dayRecords.reduce((sum, r) => sum + (r.bentoQty || 0), 0);
