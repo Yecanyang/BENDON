@@ -38,7 +38,6 @@
     .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; }
     .today-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .today-chip { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; }
-    .today-chip-row { display: flex; gap: 6px; align-items: center; }
     .today-chip strong { color: #e0f2fe; }
     .today-empty { font-size: 0.85rem; color: #e0f2fe; }
 
@@ -130,7 +129,6 @@
     </div>
   </div>
 
-  <!-- 今日訂餐統計看板 (右上角與下方同步顯示) -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -309,7 +307,13 @@
       const res = await fetch(GAS_URL);
       const json = await res.json();
       if (json.status === 'success') {
-        allRecords = json.data.sort((a, b) => b.date.localeCompare(a.date));
+        // 確保最新日期的排在最上面
+        allRecords = json.data.map(r => ({
+          ...r,
+          bentoQty: Number(r.bentoQty) || 0,
+          drinkQty: Number(r.drinkQty) || 0,
+          amount: Number(r.amount) || 0
+        })).sort((a, b) => b.date.localeCompare(a.date));
         renderDashboard();
       }
     } catch (err) {
@@ -498,14 +502,12 @@
 
     allRecords.forEach(r => {
       if (!vendorStats[r.vendor]) {
-        vendorStats[r.vendor] = { totalDeposit: 0, totalDeduct: 0, balance: 0, todayDeposit: 0, todayDeduct: 0 };
+        vendorStats[r.vendor] = { balance: 0, todayDeposit: 0, todayDeduct: 0 };
       }
       // 累計總餘額 (所有歷史記錄計算)
       if (r.type === '寄款') {
-        vendorStats[r.vendor].totalDeposit += r.amount;
         vendorStats[r.vendor].balance += r.amount;
       } else {
-        vendorStats[r.vendor].totalDeduct += r.amount;
         vendorStats[r.vendor].balance -= r.amount;
       }
 
@@ -592,6 +594,7 @@
     });
 
     let html = '';
+    // 明細日期由新到舊排序
     Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
       const dayRecords = groupedByDate[dateKey];
       const dayBentoTotal = dayRecords.reduce((sum, r) => sum + (r.bentoQty || 0), 0);
