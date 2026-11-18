@@ -129,7 +129,6 @@
     </div>
   </div>
 
-  <!-- 今日訂餐統計看板 -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -173,7 +172,6 @@
         </div>
       </div>
 
-      <!-- 便當與飲料分開計算區 -->
       <div id="calcSection" class="calc-box">
         <label style="font-weight: bold; color:#0369a1;">🍱 便當與飲料分開計算</label>
         
@@ -193,8 +191,8 @@
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
-        <label>分述 (品項備註)</label>
-        <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3" required>
+        <label>分述 (品項備註 - 非必填)</label>
+        <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3">
       </div>
 
       <label class="checkbox-group" id="deliveredGroup">
@@ -209,7 +207,6 @@
     </form>
   </div>
 
-  <!-- 每日明細區 -->
   <div class="card">
     <div class="filter-bar">
       <strong id="tableTitle">每日明細</strong>
@@ -229,7 +226,6 @@
   let selectedVendor = 'ALL';
   let GAS_URL = localStorage.getItem('BENTO_GAS_URL') || '';
 
-  // 標準化日期格式，無論試算表回傳 YYYY/M/D、ISO字串或 YYYY-MM-DD 皆統一轉為 YYYY-MM-DD
   function normalizeDate(rawDate) {
     if (!rawDate) return '';
     const str = String(rawDate).trim();
@@ -321,19 +317,16 @@
     }
   }
 
-  // 解析數量：優先採用專屬欄位，若無則從分述文字自動萃取
   function parseQuantities(r) {
     let b = Number(r.bentoQty) || 0;
     let d = Number(r.drinkQty) || 0;
 
     if (r.type === '扣款' && b === 0 && d === 0 && r.description) {
       const desc = String(r.description);
-      // 嘗試比對飲料關鍵字後方的數字
       const drinkMatch = desc.match(/(?:飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|湯)[*xX×\s]*(\d+)/);
       if (drinkMatch) {
         d = parseInt(drinkMatch[1], 10) || 0;
       }
-      // 嘗試比對便當關鍵字或一般 *數字
       const bentoMatch = desc.match(/(?:便當|排骨|雞腿|控肉|三寶|招牌|魚排|豬排|滷肉|飯)[*xX×\s]*(\d+)/);
       if (bentoMatch) {
         b = parseInt(bentoMatch[1], 10) || 0;
@@ -370,7 +363,6 @@
             _order: index
           };
         }).sort((a, b) => {
-          // 最新日期在最上面，同日期則最新輸入的在最上面
           const dateDiff = b.date.localeCompare(a.date);
           return dateDiff !== 0 ? dateDiff : b._order - a._order;
         });
@@ -452,7 +444,7 @@
     document.getElementById('vendorInput').value = record.vendor;
     document.getElementById('typeInput').value = record.type;
     document.getElementById('amountInput').value = record.amount;
-    document.getElementById('descInput').value = record.description;
+    document.getElementById('descInput').value = record.description || '';
     document.getElementById('deliveredInput').checked = record.isDelivered;
     
     document.getElementById('bentoQtyInput').value = record.bentoQty > 0 ? record.bentoQty : '';
@@ -562,14 +554,12 @@
       if (!vendorStats[r.vendor]) {
         vendorStats[r.vendor] = { balance: 0, todayDeposit: 0, todayDeduct: 0 };
       }
-      // 累計總餘額（所有歷史紀錄跨日保留）
       if (r.type === '寄款') {
         vendorStats[r.vendor].balance += r.amount;
       } else {
         vendorStats[r.vendor].balance -= r.amount;
       }
 
-      // 僅計算今天的寄款與扣款金額
       if (r.date === todayStr) {
         if (r.type === '寄款') {
           vendorStats[r.vendor].todayDeposit += r.amount;
@@ -607,10 +597,16 @@
     renderList();
   }
 
+  // 點擊第二次即可取消選取
   function selectVendor(vendor) {
-    selectedVendor = vendor;
-    if (vendor !== 'ALL') {
-      document.getElementById('vendorInput').value = vendor;
+    if (selectedVendor === vendor) {
+      selectedVendor = 'ALL';
+      document.getElementById('vendorInput').value = '';
+    } else {
+      selectedVendor = vendor;
+      if (vendor !== 'ALL') {
+        document.getElementById('vendorInput').value = vendor;
+      }
     }
     renderDashboard();
   }
@@ -652,7 +648,6 @@
     });
 
     let html = '';
-    // 最新日期排在最上面
     Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a)).forEach(dateKey => {
       const dayRecords = groupedByDate[dateKey];
       const dayBentoTotal = dayRecords.reduce((sum, r) => sum + (r.bentoQty || 0), 0);
@@ -686,7 +681,7 @@
                   </button>
                 ` : ''}
               </div>
-              <div class="record-desc">${r.description}</div>
+              <div class="record-desc">${r.description || ''}</div>
             </div>
             <div class="record-right">
               <div style="font-weight:bold; color:${r.type === '寄款' ? 'var(--deposit)' : 'var(--deduct)'}">
