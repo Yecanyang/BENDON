@@ -45,13 +45,15 @@
     @media (min-width: 640px) {
       .vendor-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
     }
-    .vendor-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: 0.15s; }
+    .vendor-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: 0.15s; position: relative; }
     .vendor-card.active { border-color: var(--primary); background: #e0f2fe; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); }
     .vendor-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #0369a1; }
     .vendor-balance { font-size: 1.15rem; font-weight: 700; }
     .bal-pos { color: #0284c7; }
     .bal-neg { color: #b91c1c; }
     .vendor-meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .quick-cash-btn { position: absolute; top: 8px; right: 8px; background: #dcfce7; color: #16a34a; border: 1px solid #86efac; padding: 2px 6px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+    .quick-cash-btn:active { transform: scale(0.95); }
 
     .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(2, 132, 199, 0.05); }
     .card-editing { border-color: var(--warning); background: #fffbeb; }
@@ -418,6 +420,39 @@
     }
   }
 
+  // 快速新增一筆同額的寄款（代表廠商現場付現清償）
+  async function quickPayCash(event, vendorName, balance) {
+    event.stopPropagation(); // 避免點到卡片本身的篩選事件
+    if (balance <= 0) {
+      alert(`【${vendorName}】目前沒有欠款需要付現喔！`);
+      return;
+    }
+    if (!confirm(`確定要為【${vendorName}】快顯付現清償 $${balance.toLocaleString()} 嗎？`)) return;
+
+    const payload = {
+      action: 'add',
+      id: '',
+      date: getTodayString(),
+      vendor: vendorName,
+      type: '寄款',
+      amount: balance,
+      description: '現場付現清償',
+      isDelivered: true,
+      bentoQty: 0,
+      drinkQty: 0
+    };
+
+    try {
+      await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      await fetchRecords();
+    } catch (err) {
+      alert('付現紀錄儲存失敗');
+    }
+  }
+
   async function toggleDelivered(id) {
     try {
       const res = await fetch(GAS_URL, {
@@ -580,7 +615,15 @@
       const card = document.createElement('div');
       card.className = `vendor-card ${selectedVendor === v ? 'active' : ''}`;
       card.onclick = () => selectVendor(v);
+
+      // 如果該廠商目前處於「欠款狀態」（餘額小於 0），卡片右上角會出現快速付現按鈕
+      const debtAmount = stat.balance < 0 ? Math.abs(stat.balance) : 0;
+      const quickPayHtml = debtAmount > 0 
+        ? `<button class="quick-cash-btn" onclick="quickPayCash(event, '${v}', ${debtAmount})">💵 快速付現</button>` 
+        : '';
+
       card.innerHTML = `
+        ${quickPayHtml}
         <div class="vendor-name">${v}</div>
         <div class="vendor-balance ${isPos ? 'bal-pos' : 'bal-neg'}">
           ${isPos ? '餘' : '欠'}$${Math.abs(stat.balance).toLocaleString()}
@@ -597,7 +640,6 @@
     renderList();
   }
 
-  // 點擊第二次即可取消選取
   function selectVendor(vendor) {
     if (selectedVendor === vendor) {
       selectedVendor = 'ALL';
