@@ -33,12 +33,16 @@
 
     /* 今日訂餐統計看板 */
     .today-card { background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%); color: #ffffff; border-radius: 12px; padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(3, 105, 161, 0.2); }
-    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+    .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; flex-wrap: wrap; gap: 6px; }
     .today-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 6px; }
-    .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; }
+    .today-total-badge { background: #bae6fd; color: #0369a1; font-weight: 800; padding: 4px 12px; border-radius: 20px; font-size: 0.88rem; }
+    .today-money-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; font-size: 0.88rem; }
+    .today-money-pill { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.28); border-radius: 8px; padding: 5px 10px; font-weight: 600; }
+    .today-sub-label { font-size: 0.8rem; color: #e0f2fe; margin: 8px 0 6px 0; font-weight: 600; }
     .today-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .today-chip { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 2px; }
+    .today-chip { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px 10px; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; }
     .today-chip strong { color: #e0f2fe; }
+    .item-chip { background: #e0f2fe; color: #0369a1; border: none; font-weight: 700; }
     .today-empty { font-size: 0.85rem; color: #e0f2fe; }
 
     .vendor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
@@ -47,7 +51,7 @@
     }
     .vendor-card { background: var(--card); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: 0.15s; position: relative; }
     .vendor-card.active { border-color: var(--primary); background: #e0f2fe; box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2); }
-    .vendor-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #0369a1; }
+    .vendor-name { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #0369a1; padding-right: 64px; }
     .vendor-balance { font-size: 1.15rem; font-weight: 700; }
     .bal-pos { color: #0284c7; }
     .bal-neg { color: #b91c1c; }
@@ -131,6 +135,7 @@
     </div>
   </div>
 
+  <!-- 今日訂餐統計看板 -->
   <div class="today-card">
     <div class="today-header">
       <div class="today-title">
@@ -139,8 +144,17 @@
       </div>
       <div class="today-total-badge" id="todayTotalBadge">便當 0 個 / 飲料 0 杯</div>
     </div>
+    <div class="today-money-row">
+      <div class="today-money-pill" id="todayBentoMoney">🍱 今日便當金額：$0</div>
+      <div class="today-money-pill" id="todayDrinkMoney">🥤 今日飲料金額：$0</div>
+    </div>
+    <div class="today-sub-label">廠商訂購彙整：</div>
     <div id="todayVendorList" class="today-list">
       <div class="today-empty">載入中...</div>
+    </div>
+    <div class="today-sub-label">今日便當品項份數：</div>
+    <div id="todayBentoItemList" class="today-list">
+      <div class="today-empty">尚無便當品項明細</div>
     </div>
   </div>
 
@@ -193,7 +207,7 @@
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
-        <label>分述 (品項備註 - 非必填)</label>
+        <label>分述 (品項備註 - 非必填，支援如「排骨便當*3 + 雞腿便當*2」自動統計份數)</label>
         <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 紅茶*3">
       </div>
 
@@ -227,6 +241,25 @@
   let allRecords = [];
   let selectedVendor = 'ALL';
   let GAS_URL = localStorage.getItem('BENTO_GAS_URL') || '';
+  const META_STORAGE_KEY = 'BENTO_ITEM_MONEY_MAP';
+
+  function loadMoneyMeta() {
+    try {
+      return JSON.parse(localStorage.getItem(META_STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveMoneyMeta(id, bentoMoney, drinkMoney) {
+    if (!id) return;
+    const map = loadMoneyMeta();
+    map[id] = {
+      bentoMoney: Number(bentoMoney) || 0,
+      drinkMoney: Number(drinkMoney) || 0
+    };
+    localStorage.setItem(META_STORAGE_KEY, JSON.stringify(map));
+  }
 
   function normalizeDate(rawDate) {
     if (!rawDate) return '';
@@ -342,6 +375,76 @@
     return { b, d };
   }
 
+  function computeMoneySplit(r, qtys, metaMap) {
+    if (r.type !== '扣款') {
+      return { bentoMoney: 0, drinkMoney: 0 };
+    }
+    const saved = metaMap[r.id];
+    if (saved && (Number(saved.bentoMoney) > 0 || Number(saved.drinkMoney) > 0)) {
+      return {
+        bentoMoney: Number(saved.bentoMoney) || 0,
+        drinkMoney: Number(saved.drinkMoney) || 0
+      };
+    }
+    const totalAmt = Number(r.amount) || 0;
+    if (qtys.b > 0 && qtys.d === 0) {
+      return { bentoMoney: totalAmt, drinkMoney: 0 };
+    }
+    if (qtys.d > 0 && qtys.b === 0) {
+      return { bentoMoney: 0, drinkMoney: totalAmt };
+    }
+    if (qtys.b > 0 && qtys.d > 0) {
+      const approxBento = Math.round(totalAmt * (qtys.b / (qtys.b + qtys.d)));
+      return { bentoMoney: approxBento, drinkMoney: Math.max(0, totalAmt - approxBento) };
+    }
+    return { bentoMoney: totalAmt, drinkMoney: 0 };
+  }
+
+  // 解析分述中的各款便當品項與份數
+  function extractBentoItemCounts(r, qtys) {
+    const results = [];
+    if (r.type !== '扣款' || !r.description) return results;
+    const desc = String(r.description);
+    const segments = desc.split(/[+＋、,，/／&＆\n]+/).map(s => s.trim()).filter(Boolean);
+    const drinkKeywordRegex = /(飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|多多|養樂多|湯)/;
+    const bentoKeywordRegex = /(便當|排骨|雞腿|控肉|三寶|招牌|魚排|豬排|滷肉|雞排|蝦捲|香腸|燒肉|牛腩|鴨腿|腿庫|飯)/;
+
+    segments.forEach(seg => {
+      if (drinkKeywordRegex.test(seg) && !bentoKeywordRegex.test(seg)) return;
+
+      let qty = 0;
+      let name = seg;
+
+      const multMatch = seg.match(/^(.+?)[*xX×]\s*(\d+)\s*(?:個|份|盒|便當)?$/);
+      const unitMatch = seg.match(/^(.+?)\s*(\d+)\s*(?:個|份|盒)$/);
+      const tailNumMatch = seg.match(/^(.+?)\s+(\d+)$/);
+
+      if (multMatch) {
+        name = multMatch[1].trim();
+        qty = parseInt(multMatch[2], 10) || 0;
+      } else if (unitMatch) {
+        name = unitMatch[1].trim();
+        qty = parseInt(unitMatch[2], 10) || 0;
+      } else if (tailNumMatch && bentoKeywordRegex.test(tailNumMatch[1])) {
+        name = tailNumMatch[1].trim();
+        qty = parseInt(tailNumMatch[2], 10) || 0;
+      }
+
+      name = name.replace(/[*xX×]+$/g, '').trim();
+      if (qty > 0 && name) {
+        results.push({ name, qty });
+      }
+    });
+
+    if (results.length === 0 && qtys.b > 0) {
+      const cleanLabel = desc.replace(/[*xX×]\s*\d+/g, '').trim();
+      const label = cleanLabel || '便當';
+      results.push({ name: label, qty: qtys.b });
+    }
+
+    return results;
+  }
+
   async function fetchRecords() {
     if (!GAS_URL) {
       document.getElementById('configCard').classList.remove('hidden');
@@ -353,14 +456,18 @@
       const res = await fetch(GAS_URL);
       const json = await res.json();
       if (json.status === 'success') {
+        const metaMap = loadMoneyMeta();
         allRecords = json.data.map((r, index) => {
           const cleanDate = normalizeDate(r.date);
           const qtys = parseQuantities(r);
+          const moneySplit = computeMoneySplit(r, qtys, metaMap);
           return {
             ...r,
             date: cleanDate,
             bentoQty: qtys.b,
             drinkQty: qtys.d,
+            bentoMoney: moneySplit.bentoMoney,
+            drinkMoney: moneySplit.drinkMoney,
             amount: Number(r.amount) || 0,
             _order: index
           };
@@ -385,8 +492,23 @@
     const isEditing = !!editId;
     const type = document.getElementById('typeInput').value;
     
+    const bPriceVal = parseFloat(document.getElementById('bentoPriceInput').value) || 0;
     const bQtyVal = type === '扣款' ? (parseInt(document.getElementById('bentoQtyInput').value, 10) || 0) : 0;
+    const dPriceVal = parseFloat(document.getElementById('drinkPriceInput').value) || 0;
     const dQtyVal = type === '扣款' ? (parseInt(document.getElementById('drinkQtyInput').value, 10) || 0) : 0;
+    const totalAmtVal = Number(document.getElementById('amountInput').value) || 0;
+
+    let calcBentoMoney = bPriceVal * bQtyVal;
+    let calcDrinkMoney = dPriceVal * dQtyVal;
+    if (type === '扣款' && calcBentoMoney === 0 && calcDrinkMoney === 0) {
+      if (bQtyVal > 0 && dQtyVal === 0) {
+        calcBentoMoney = totalAmtVal;
+      } else if (dQtyVal > 0 && bQtyVal === 0) {
+        calcDrinkMoney = totalAmtVal;
+      } else {
+        calcBentoMoney = totalAmtVal;
+      }
+    }
     
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
@@ -398,7 +520,7 @@
       date: document.getElementById('dateInput').value,
       vendor: document.getElementById('vendorInput').value.trim(),
       type: type,
-      amount: document.getElementById('amountInput').value,
+      amount: totalAmtVal,
       description: document.getElementById('descInput').value.trim(),
       isDelivered: type === '扣款' ? document.getElementById('deliveredInput').checked : true,
       bentoQty: bQtyVal,
@@ -406,10 +528,24 @@
     };
 
     try {
-      await fetch(GAS_URL, {
+      const resp = await fetch(GAS_URL, {
         method: 'POST',
         body: JSON.stringify(payload)
       });
+      let targetId = editId;
+      try {
+        const resJson = await resp.json();
+        if (resJson && resJson.id) targetId = resJson.id;
+      } catch (_) {}
+
+      if (type === '扣款') {
+        if (targetId) {
+          saveMoneyMeta(targetId, calcBentoMoney, calcDrinkMoney);
+        } else {
+          saveMoneyMeta(`${payload.date}_${payload.vendor}_${totalAmtVal}_${payload.description}`, calcBentoMoney, calcDrinkMoney);
+        }
+      }
+
       cancelEdit();
       await fetchRecords();
     } catch (err) {
@@ -420,14 +556,13 @@
     }
   }
 
-  // 快速新增一筆同額的寄款（代表廠商現場付現清償）
   async function quickPayCash(event, vendorName, balance) {
-    event.stopPropagation(); // 避免點到卡片本身的篩選事件
+    event.stopPropagation();
     if (balance <= 0) {
-      alert(`【${vendorName}】目前沒有欠款需要付現喔！`);
+      alert(`【${vendorName}】目前沒有欠款需要付現。`);
       return;
     }
-    if (!confirm(`確定要為【${vendorName}】快顯付現清償 $${balance.toLocaleString()} 嗎？`)) return;
+    if (!confirm(`確定要為【${vendorName}】快速付現清償 $${balance.toLocaleString()} 嗎？`)) return;
 
     const payload = {
       action: 'add',
@@ -484,10 +619,10 @@
     
     document.getElementById('bentoQtyInput').value = record.bentoQty > 0 ? record.bentoQty : '';
     document.getElementById('drinkQtyInput').value = record.drinkQty > 0 ? record.drinkQty : '';
-    document.getElementById('bentoPriceInput').value = '';
-    document.getElementById('drinkPriceInput').value = '';
-    document.getElementById('bentoSubtotal').value = '';
-    document.getElementById('drinkSubtotal').value = '';
+    document.getElementById('bentoPriceInput').value = record.bentoQty > 0 && record.bentoMoney > 0 ? Math.round(record.bentoMoney / record.bentoQty) : '';
+    document.getElementById('drinkPriceInput').value = record.drinkQty > 0 && record.drinkMoney > 0 ? Math.round(record.drinkMoney / record.drinkQty) : '';
+    document.getElementById('bentoSubtotal').value = record.bentoMoney > 0 ? `$${record.bentoMoney}` : '';
+    document.getElementById('drinkSubtotal').value = record.drinkMoney > 0 ? `$${record.drinkMoney}` : '';
 
     toggleCalcFields();
 
@@ -542,8 +677,11 @@
     document.getElementById('todayDateLabel').textContent = `(${todayStr})`;
     
     const todayVendorData = {};
+    const bentoItemTotals = {};
     let totalBento = 0;
     let totalDrink = 0;
+    let totalBentoMoney = 0;
+    let totalDrinkMoney = 0;
 
     allRecords.forEach(r => {
       if (r.date === todayStr && r.type === '扣款') {
@@ -558,25 +696,48 @@
           totalBento += b;
           totalDrink += d;
         }
+
+        totalBentoMoney += Number(r.bentoMoney) || 0;
+        totalDrinkMoney += Number(r.drinkMoney) || 0;
+
+        const items = extractBentoItemCounts(r, { b, d });
+        items.forEach(item => {
+          if (!bentoItemTotals[item.name]) {
+            bentoItemTotals[item.name] = 0;
+          }
+          bentoItemTotals[item.name] += item.qty;
+        });
       }
     });
 
     document.getElementById('todayTotalBadge').textContent = `便當 ${totalBento} 個 / 飲料 ${totalDrink} 杯`;
+    document.getElementById('todayBentoMoney').textContent = `🍱 今日便當金額：$${totalBentoMoney.toLocaleString()}`;
+    document.getElementById('todayDrinkMoney').textContent = `🥤 今日飲料金額：$${totalDrinkMoney.toLocaleString()}`;
+
     const listEl = document.getElementById('todayVendorList');
     const vendors = Object.keys(todayVendorData);
 
     if (vendors.length === 0) {
       listEl.innerHTML = '<div class="today-empty">今日尚無廠商訂購登記（跨日已自動歸零）</div>';
-      return;
+    } else {
+      listEl.innerHTML = vendors.map(v => {
+        const item = todayVendorData[v];
+        let parts = [];
+        if (item.bento > 0) parts.push(`便當 ${item.bento}個`);
+        if (item.drink > 0) parts.push(`飲料 ${item.drink}杯`);
+        return `<div class="today-chip"><strong>${v}</strong>: ${parts.join(' / ')}</div>`;
+      }).join('');
     }
 
-    listEl.innerHTML = vendors.map(v => {
-      const item = todayVendorData[v];
-      let parts = [];
-      if (item.bento > 0) parts.push(`便當 ${item.bento}個`);
-      if (item.drink > 0) parts.push(`飲料 ${item.drink}杯`);
-      return `<div class="today-chip"><strong>${v}</strong>: ${parts.join(' / ')}</div>`;
-    }).join('');
+    const itemListEl = document.getElementById('todayBentoItemList');
+    const itemNames = Object.keys(bentoItemTotals);
+    if (itemNames.length === 0) {
+      itemListEl.innerHTML = '<div class="today-empty">尚無便當品項明細</div>';
+    } else {
+      itemListEl.innerHTML = itemNames.map(name => `
+        <div class="today-chip item-chip">${name} <strong>${bentoItemTotals[name]} 份</strong></div>
+      `).join('');
+    }
   }
 
   function renderDashboard() {
@@ -616,7 +777,6 @@
       card.className = `vendor-card ${selectedVendor === v ? 'active' : ''}`;
       card.onclick = () => selectVendor(v);
 
-      // 如果該廠商目前處於「欠款狀態」（餘額小於 0），卡片右上角會出現快速付現按鈕
       const debtAmount = stat.balance < 0 ? Math.abs(stat.balance) : 0;
       const quickPayHtml = debtAmount > 0 
         ? `<button class="quick-cash-btn" onclick="quickPayCash(event, '${v}', ${debtAmount})">💵 快速付現</button>` 
