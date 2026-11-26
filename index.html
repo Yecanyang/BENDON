@@ -140,18 +140,19 @@
         <span>📋 今日訂餐統計</span>
         <span id="todayDateLabel" style="font-size:0.8rem; font-weight:normal; color:#e0f2fe;"></span>
       </div>
-      <div class="today-total-badge" id="todayTotalBadge">便當 0 個 / 飲料 0 杯 / 水餃 0 顆</div>
+      <div class="today-total-badge" id="todayTotalBadge">便當 0 個 / 飲料 0 杯 / 水餃 0 顆 / 湯品 0 碗</div>
     </div>
     <div class="today-money-row">
       <div class="today-money-pill" id="todayBentoMoney">🍱 今日便當金額：$0</div>
       <div class="today-money-pill" id="todayDrinkMoney">🥤 今日飲料金額：$0</div>
       <div class="today-money-pill" id="todayDumplingMoney">🥟 今日水餃金額：$0</div>
+      <div class="today-money-pill" id="todaySoupMoney">🥣 今日湯品金額：$0</div>
     </div>
     <div class="today-sub-label">廠商訂購彙整：</div>
     <div id="todayVendorList" class="today-list">
       <div class="today-empty">載入中...</div>
     </div>
-    <div class="today-sub-label">今日便當／水餃品項份數：</div>
+    <div class="today-sub-label">今日便當／水餃／湯品品項份數：</div>
     <div id="todayBentoItemList" class="today-list">
       <div class="today-empty">尚無品項明細</div>
     </div>
@@ -176,7 +177,7 @@
         <div class="form-group">
           <label>帳務類型</label>
           <select id="typeInput" onchange="toggleCalcFields()" required>
-            <option value="扣款">➖ 扣款 (訂便當/飲料/水餃)</option>
+            <option value="扣款">➖ 扣款 (訂便當/飲料/水餃/湯品)</option>
             <option value="寄款">➕ 寄款 (廠商預繳)</option>
           </select>
         </div>
@@ -187,7 +188,7 @@
       </div>
 
       <div id="calcSection" class="calc-box">
-        <label style="font-weight: bold; color:#0369a1;">🍱 便當、飲料與水餃分開計算（皆支援小數，如 0.5、10.5）</label>
+        <label style="font-weight: bold; color:#0369a1;">🍱 便當、飲料、水餃與湯品分開計算（皆支援小數，如 0.5、10.5）</label>
         
         <div style="font-size: 0.85rem; font-weight: 600; color: #0284c7;">1. 便當計算</div>
         <div class="calc-grid">
@@ -209,11 +210,18 @@
           <input type="number" id="dumplingQtyInput" min="0" step="any" placeholder="數量 (顆/份)" oninput="calculateTotal()">
           <input type="text" id="dumplingSubtotal" readonly placeholder="水餃小計" style="background:#bae6fd; font-weight:bold; text-align:center; color:#0369a1;">
         </div>
+
+        <div style="font-size: 0.85rem; font-weight: 600; color: #0284c7; margin-top: 4px;">4. 湯品計算</div>
+        <div class="calc-grid">
+          <input type="number" id="soupPriceInput" min="0" step="any" placeholder="湯品單價" oninput="calculateTotal()">
+          <input type="number" id="soupQtyInput" min="0" step="any" placeholder="數量 (碗/份)" oninput="calculateTotal()">
+          <input type="text" id="soupSubtotal" readonly placeholder="湯品小計" style="background:#bae6fd; font-weight:bold; text-align:center; color:#0369a1;">
+        </div>
       </div>
 
       <div class="form-group" style="margin-top: 10px;">
         <label>分述 (品項備註 - 非必填)</label>
-        <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 鮮肉水餃*15 + 紅茶*3">
+        <input type="text" id="descInput" placeholder="例如：排骨便當*3 + 鮮肉水餃*15 + 味噌湯*2 + 紅茶*3">
       </div>
 
       <label class="checkbox-group" id="deliveredGroup">
@@ -341,15 +349,19 @@
     const dQty = parseFloat(document.getElementById('drinkQtyInput').value) || 0;
     const uPrice = parseFloat(document.getElementById('dumplingPriceInput').value) || 0;
     const uQty = parseFloat(document.getElementById('dumplingQtyInput').value) || 0;
+    const sPrice = parseFloat(document.getElementById('soupPriceInput').value) || 0;
+    const sQty = parseFloat(document.getElementById('soupQtyInput').value) || 0;
 
     const bTotal = roundMoney(bPrice * bQty);
     const dTotal = roundMoney(dPrice * dQty);
     const uTotal = roundMoney(uPrice * uQty);
-    const grandTotal = roundMoney(bTotal + dTotal + uTotal);
+    const sTotal = roundMoney(sPrice * sQty);
+    const grandTotal = roundMoney(bTotal + dTotal + uTotal + sTotal);
 
     document.getElementById('bentoSubtotal').value = bTotal > 0 ? `$${formatMoney(bTotal)}` : '';
     document.getElementById('drinkSubtotal').value = dTotal > 0 ? `$${formatMoney(dTotal)}` : '';
     document.getElementById('dumplingSubtotal').value = uTotal > 0 ? `$${formatMoney(uTotal)}` : '';
+    document.getElementById('soupSubtotal').value = sTotal > 0 ? `$${formatMoney(sTotal)}` : '';
     
     if (grandTotal > 0) {
       document.getElementById('amountInput').value = grandTotal;
@@ -360,6 +372,7 @@
     let b = Number(r.bentoQty) || 0;
     let d = Number(r.drinkQty) || 0;
     let u = 0;
+    let s = 0;
 
     if (r.type === '扣款' && r.description) {
       const desc = String(r.description);
@@ -367,8 +380,12 @@
       if (dumplingMatch) {
         u = parseFloat(dumplingMatch[1]) || 0;
       }
-      if (b === 0 && d === 0 && u === 0) {
-        const drinkMatch = desc.match(/(?:飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|湯)[*xX×\s]*(\d+(?:\.\d+)?)/);
+      const soupMatch = desc.match(/(?:味噌湯|紫菜湯|蛋花湯|酸辣湯|貢丸湯|魚丸湯|玉米濃湯|蘿蔔湯|湯品|湯)[*xX×\s]*(\d+(?:\.\d+)?)/);
+      if (soupMatch) {
+        s = parseFloat(soupMatch[1]) || 0;
+      }
+      if (b === 0 && d === 0 && u === 0 && s === 0) {
+        const drinkMatch = desc.match(/(?:飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水)[*xX×\s]*(\d+(?:\.\d+)?)/);
         if (drinkMatch) {
           d = parseFloat(drinkMatch[1]) || 0;
         }
@@ -383,27 +400,31 @@
         }
       }
     }
-    return { b: roundMoney(b), d: roundMoney(d), u: roundMoney(u) };
+    return { b: roundMoney(b), d: roundMoney(d), u: roundMoney(u), s: roundMoney(s) };
   }
 
   function resolveMoneySplit(r, qtys) {
     if (r.type !== '扣款') {
-      return { bentoMoney: 0, drinkMoney: 0, dumplingMoney: 0 };
+      return { bentoMoney: 0, drinkMoney: 0, dumplingMoney: 0, soupMoney: 0 };
     }
     const rawB = roundMoney(r.bentoMoney);
     const rawD = roundMoney(r.drinkMoney);
     const rawU = roundMoney(r.dumplingMoney);
-    if (rawB > 0 || rawD > 0 || rawU > 0) {
-      return { bentoMoney: rawB, drinkMoney: rawD, dumplingMoney: rawU };
+    const rawS = roundMoney(r.soupMoney);
+    if (rawB > 0 || rawD > 0 || rawU > 0 || rawS > 0) {
+      return { bentoMoney: rawB, drinkMoney: rawD, dumplingMoney: rawU, soupMoney: rawS };
     }
     const totalAmt = roundMoney(r.amount);
-    if (qtys.u > 0 && qtys.b === 0 && qtys.d === 0) {
-      return { bentoMoney: 0, drinkMoney: 0, dumplingMoney: totalAmt };
+    if (qtys.s > 0 && qtys.b === 0 && qtys.d === 0 && qtys.u === 0) {
+      return { bentoMoney: 0, drinkMoney: 0, dumplingMoney: 0, soupMoney: totalAmt };
     }
-    if (qtys.d > 0 && qtys.b === 0 && qtys.u === 0) {
-      return { bentoMoney: 0, drinkMoney: totalAmt, dumplingMoney: 0 };
+    if (qtys.u > 0 && qtys.b === 0 && qtys.d === 0 && qtys.s === 0) {
+      return { bentoMoney: 0, drinkMoney: 0, dumplingMoney: totalAmt, soupMoney: 0 };
     }
-    return { bentoMoney: totalAmt, drinkMoney: 0, dumplingMoney: 0 };
+    if (qtys.d > 0 && qtys.b === 0 && qtys.u === 0 && qtys.s === 0) {
+      return { bentoMoney: 0, drinkMoney: totalAmt, dumplingMoney: 0, soupMoney: 0 };
+    }
+    return { bentoMoney: totalAmt, drinkMoney: 0, dumplingMoney: 0, soupMoney: 0 };
   }
 
   function extractItemCounts(r, qtys) {
@@ -411,8 +432,8 @@
     if (r.type !== '扣款' || !r.description) return results;
     const desc = String(r.description);
     const segments = desc.split(/[+＋、,，/／&＆\n]+/).map(s => s.trim()).filter(Boolean);
-    const drinkKeywordRegex = /(飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|多多|養樂多|湯)/;
-    const itemKeywordRegex = /(便當|排骨|雞腿|控肉|三寶|招牌|魚排|豬排|滷肉|雞排|蝦捲|香腸|燒肉|牛腩|鴨腿|腿庫|飯|水餃|鍋貼|湯餃)/;
+    const drinkKeywordRegex = /(飲料|紅茶|綠茶|奶茶|青茶|烏龍|冬瓜|咖啡|可樂|汽水|多多|養樂多)/;
+    const itemKeywordRegex = /(便當|排骨|雞腿|控肉|三寶|招牌|魚排|豬排|滷肉|雞排|蝦捲|香腸|燒肉|牛腩|鴨腿|腿庫|飯|水餃|鍋貼|湯餃|味噌湯|紫菜湯|蛋花湯|酸辣湯|貢丸湯|魚丸湯|玉米濃湯|蘿蔔湯|湯品|湯)/;
 
     segments.forEach(seg => {
       if (drinkKeywordRegex.test(seg) && !itemKeywordRegex.test(seg)) return;
@@ -420,8 +441,8 @@
       let qty = 0;
       let name = seg;
 
-      const multMatch = seg.match(/^(.+?)[*xX×]\s*(\d+(?:\.\d+)?)\s*(?:個|份|盒|顆|便當)?$/);
-      const unitMatch = seg.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*(?:個|份|盒|顆)$/);
+      const multMatch = seg.match(/^(.+?)[*xX×]\s*(\d+(?:\.\d+)?)\s*(?:個|份|盒|顆|碗|便當)?$/);
+      const unitMatch = seg.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*(?:個|份|盒|顆|碗)$/);
       const tailNumMatch = seg.match(/^(.+?)\s+(\d+(?:\.\d+)?)$/);
 
       if (multMatch) {
@@ -449,6 +470,9 @@
       if (qtys.u > 0) {
         results.push({ name: '水餃', qty: qtys.u });
       }
+      if (qtys.s > 0) {
+        results.push({ name: '湯品', qty: qtys.s });
+      }
     }
 
     return results;
@@ -475,9 +499,11 @@
             bentoQty: qtys.b,
             drinkQty: qtys.d,
             dumplingQty: qtys.u,
+            soupQty: qtys.s,
             bentoMoney: moneySplit.bentoMoney,
             drinkMoney: moneySplit.drinkMoney,
             dumplingMoney: moneySplit.dumplingMoney,
+            soupMoney: moneySplit.soupMoney,
             amount: roundMoney(r.amount),
             _order: index
           };
@@ -508,16 +534,21 @@
     const dQtyVal = type === '扣款' ? (parseFloat(document.getElementById('drinkQtyInput').value) || 0) : 0;
     const uPriceVal = parseFloat(document.getElementById('dumplingPriceInput').value) || 0;
     const uQtyVal = type === '扣款' ? (parseFloat(document.getElementById('dumplingQtyInput').value) || 0) : 0;
+    const sPriceVal = parseFloat(document.getElementById('soupPriceInput').value) || 0;
+    const sQtyVal = type === '扣款' ? (parseFloat(document.getElementById('soupQtyInput').value) || 0) : 0;
     const totalAmtVal = roundMoney(document.getElementById('amountInput').value);
 
     let calcBentoMoney = roundMoney(bPriceVal * bQtyVal);
     let calcDrinkMoney = roundMoney(dPriceVal * dQtyVal);
     let calcDumplingMoney = roundMoney(uPriceVal * uQtyVal);
+    let calcSoupMoney = roundMoney(sPriceVal * sQtyVal);
 
-    if (type === '扣款' && calcBentoMoney === 0 && calcDrinkMoney === 0 && calcDumplingMoney === 0) {
-      if (uQtyVal > 0 && bQtyVal === 0 && dQtyVal === 0) {
+    if (type === '扣款' && calcBentoMoney === 0 && calcDrinkMoney === 0 && calcDumplingMoney === 0 && calcSoupMoney === 0) {
+      if (sQtyVal > 0 && bQtyVal === 0 && dQtyVal === 0 && uQtyVal === 0) {
+        calcSoupMoney = totalAmtVal;
+      } else if (uQtyVal > 0 && bQtyVal === 0 && dQtyVal === 0 && sQtyVal === 0) {
         calcDumplingMoney = totalAmtVal;
-      } else if (dQtyVal > 0 && bQtyVal === 0 && uQtyVal === 0) {
+      } else if (dQtyVal > 0 && bQtyVal === 0 && uQtyVal === 0 && sQtyVal === 0) {
         calcDrinkMoney = totalAmtVal;
       } else {
         calcBentoMoney = totalAmtVal;
@@ -541,7 +572,8 @@
       drinkQty: roundMoney(dQtyVal),
       bentoMoney: calcBentoMoney,
       drinkMoney: calcDrinkMoney,
-      dumplingMoney: calcDumplingMoney
+      dumplingMoney: calcDumplingMoney,
+      soupMoney: calcSoupMoney
     };
 
     try {
@@ -580,7 +612,8 @@
       drinkQty: 0,
       bentoMoney: 0,
       drinkMoney: 0,
-      dumplingMoney: 0
+      dumplingMoney: 0,
+      soupMoney: 0
     };
 
     try {
@@ -626,14 +659,17 @@
     document.getElementById('bentoQtyInput').value = record.bentoQty > 0 ? record.bentoQty : '';
     document.getElementById('drinkQtyInput').value = record.drinkQty > 0 ? record.drinkQty : '';
     document.getElementById('dumplingQtyInput').value = record.dumplingQty > 0 ? record.dumplingQty : '';
+    document.getElementById('soupQtyInput').value = record.soupQty > 0 ? record.soupQty : '';
 
     document.getElementById('bentoPriceInput').value = record.bentoQty > 0 && record.bentoMoney > 0 ? roundMoney(record.bentoMoney / record.bentoQty) : '';
     document.getElementById('drinkPriceInput').value = record.drinkQty > 0 && record.drinkMoney > 0 ? roundMoney(record.drinkMoney / record.drinkQty) : '';
     document.getElementById('dumplingPriceInput').value = record.dumplingQty > 0 && record.dumplingMoney > 0 ? roundMoney(record.dumplingMoney / record.dumplingQty) : '';
+    document.getElementById('soupPriceInput').value = record.soupQty > 0 && record.soupMoney > 0 ? roundMoney(record.soupMoney / record.soupQty) : '';
 
     document.getElementById('bentoSubtotal').value = record.bentoMoney > 0 ? `$${formatMoney(record.bentoMoney)}` : '';
     document.getElementById('drinkSubtotal').value = record.drinkMoney > 0 ? `$${formatMoney(record.drinkMoney)}` : '';
     document.getElementById('dumplingSubtotal').value = record.dumplingMoney > 0 ? `$${formatMoney(record.dumplingMoney)}` : '';
+    document.getElementById('soupSubtotal').value = record.soupMoney > 0 ? `$${formatMoney(record.soupMoney)}` : '';
 
     toggleCalcFields();
 
@@ -657,9 +693,12 @@
     document.getElementById('drinkQtyInput').value = '';
     document.getElementById('dumplingPriceInput').value = '';
     document.getElementById('dumplingQtyInput').value = '';
+    document.getElementById('soupPriceInput').value = '';
+    document.getElementById('soupQtyInput').value = '';
     document.getElementById('bentoSubtotal').value = '';
     document.getElementById('drinkSubtotal').value = '';
     document.getElementById('dumplingSubtotal').value = '';
+    document.getElementById('soupSubtotal').value = '';
     document.getElementById('deliveredInput').checked = false;
     toggleCalcFields();
     document.getElementById('formTitle').textContent = '➕ 新增訂餐／扣款紀錄';
@@ -695,33 +734,39 @@
     let totalBento = 0;
     let totalDrink = 0;
     let totalDumpling = 0;
+    let totalSoup = 0;
     let totalBentoMoney = 0;
     let totalDrinkMoney = 0;
     let totalDumplingMoney = 0;
+    let totalSoupMoney = 0;
 
     allRecords.forEach(r => {
       if (r.date === todayStr && r.type === '扣款') {
         const b = roundMoney(r.bentoQty);
         const d = roundMoney(r.drinkQty);
         const u = roundMoney(r.dumplingQty);
+        const s = roundMoney(r.soupQty);
 
-        if (b > 0 || d > 0 || u > 0) {
+        if (b > 0 || d > 0 || u > 0 || s > 0) {
           if (!todayVendorData[r.vendor]) {
-            todayVendorData[r.vendor] = { bento: 0, drink: 0, dumpling: 0 };
+            todayVendorData[r.vendor] = { bento: 0, drink: 0, dumpling: 0, soup: 0 };
           }
           todayVendorData[r.vendor].bento = roundMoney(todayVendorData[r.vendor].bento + b);
           todayVendorData[r.vendor].drink = roundMoney(todayVendorData[r.vendor].drink + d);
           todayVendorData[r.vendor].dumpling = roundMoney(todayVendorData[r.vendor].dumpling + u);
+          todayVendorData[r.vendor].soup = roundMoney(todayVendorData[r.vendor].soup + s);
           totalBento = roundMoney(totalBento + b);
           totalDrink = roundMoney(totalDrink + d);
           totalDumpling = roundMoney(totalDumpling + u);
+          totalSoup = roundMoney(totalSoup + s);
         }
 
         totalBentoMoney = roundMoney(totalBentoMoney + (Number(r.bentoMoney) || 0));
         totalDrinkMoney = roundMoney(totalDrinkMoney + (Number(r.drinkMoney) || 0));
         totalDumplingMoney = roundMoney(totalDumplingMoney + (Number(r.dumplingMoney) || 0));
+        totalSoupMoney = roundMoney(totalSoupMoney + (Number(r.soupMoney) || 0));
 
-        const items = extractItemCounts(r, { b, d, u });
+        const items = extractItemCounts(r, { b, d, u, s });
         items.forEach(item => {
           if (!itemTotals[item.name]) {
             itemTotals[item.name] = 0;
@@ -731,10 +776,11 @@
       }
     });
 
-    document.getElementById('todayTotalBadge').textContent = `便當 ${formatQty(totalBento)} 個 / 飲料 ${formatQty(totalDrink)} 杯 / 水餃 ${formatQty(totalDumpling)} 顆`;
+    document.getElementById('todayTotalBadge').textContent = `便當 ${formatQty(totalBento)} 個 / 飲料 ${formatQty(totalDrink)} 杯 / 水餃 ${formatQty(totalDumpling)} 顆 / 湯品 ${formatQty(totalSoup)} 碗`;
     document.getElementById('todayBentoMoney').textContent = `🍱 今日便當金額：$${formatMoney(totalBentoMoney)}`;
     document.getElementById('todayDrinkMoney').textContent = `🥤 今日飲料金額：$${formatMoney(totalDrinkMoney)}`;
     document.getElementById('todayDumplingMoney').textContent = `🥟 今日水餃金額：$${formatMoney(totalDumplingMoney)}`;
+    document.getElementById('todaySoupMoney').textContent = `🥣 今日湯品金額：$${formatMoney(totalSoupMoney)}`;
 
     const listEl = document.getElementById('todayVendorList');
     const vendors = Object.keys(todayVendorData);
@@ -748,6 +794,7 @@
         if (item.bento > 0) parts.push(`便當 ${formatQty(item.bento)}個`);
         if (item.drink > 0) parts.push(`飲料 ${formatQty(item.drink)}杯`);
         if (item.dumpling > 0) parts.push(`水餃 ${formatQty(item.dumpling)}顆`);
+        if (item.soup > 0) parts.push(`湯品 ${formatQty(item.soup)}碗`);
         return `<div class="today-chip"><strong>${v}</strong>: ${parts.join(' / ')}</div>`;
       }).join('');
     }
@@ -878,11 +925,12 @@
       const dayBentoTotal = roundMoney(dayRecords.reduce((sum, r) => sum + (r.bentoQty || 0), 0));
       const dayDrinkTotal = roundMoney(dayRecords.reduce((sum, r) => sum + (r.drinkQty || 0), 0));
       const dayDumplingTotal = roundMoney(dayRecords.reduce((sum, r) => sum + (r.dumplingQty || 0), 0));
+      const daySoupTotal = roundMoney(dayRecords.reduce((sum, r) => sum + (r.soupQty || 0), 0));
       
       html += `
         <div class="date-group-header">
           <span>📅 ${dateKey} ${dateKey === getTodayString() ? '(今天)' : ''}</span>
-          <span>當日訂: 便當 ${formatQty(dayBentoTotal)} 個 / 飲料 ${formatQty(dayDrinkTotal)} 杯 / 水餃 ${formatQty(dayDumplingTotal)} 顆</span>
+          <span>當日訂: 便當 ${formatQty(dayBentoTotal)} 個 / 飲料 ${formatQty(dayDrinkTotal)} 杯 / 水餃 ${formatQty(dayDumplingTotal)} 顆 / 湯品 ${formatQty(daySoupTotal)} 碗</span>
         </div>
       `;
 
@@ -890,10 +938,12 @@
         const b = roundMoney(r.bentoQty);
         const d = roundMoney(r.drinkQty);
         const u = roundMoney(r.dumplingQty);
+        const s = roundMoney(r.soupQty);
         let qtyParts = [];
         if (b > 0) qtyParts.push(`便當 ${formatQty(b)}個`);
         if (d > 0) qtyParts.push(`飲料 ${formatQty(d)}杯`);
         if (u > 0) qtyParts.push(`水餃 ${formatQty(u)}顆`);
+        if (s > 0) qtyParts.push(`湯品 ${formatQty(s)}碗`);
         const qtyText = qtyParts.join(' / ');
 
         return `
